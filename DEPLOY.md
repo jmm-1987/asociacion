@@ -15,7 +15,7 @@
    - **Name**: asociacion-vecinos (o el nombre que prefieras)
    - **Environment**: Python 3
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
+   - **Start Command**: `gunicorn wsgi:app`
    - **Plan**: Free (o el plan que prefieras)
 
 ### 3. Crear Base de Datos PostgreSQL
