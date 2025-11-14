@@ -64,41 +64,54 @@ def create_app():
                 return redirect(url_for('socios.dashboard'))
         return redirect(url_for('auth.login'))
     
-    # Crear tablas de base de datos
-    with app.app_context():
-        db.create_all()
-        
-        # Crear usuarios de prueba si no existen
-        from models import User
-        if not User.query.first():
-            # Usuario directiva
-            directiva = User(
-                nombre='Administrador',
-                email='admin@asociacion.com',
-                rol='directiva',
-                fecha_alta=datetime.now(),
-                fecha_validez=datetime.now() + timedelta(days=365)
-            )
-            directiva.set_password('admin123')
+    # Crear tablas de base de datos (con manejo de errores)
+    try:
+        with app.app_context():
+            db.create_all()
             
-            # Usuario socio
-            socio = User(
-                nombre='Juan Pérez',
-                email='juan@email.com',
-                rol='socio',
-                fecha_alta=datetime.now(),
-                fecha_validez=datetime.now() + timedelta(days=30)
-            )
-            socio.set_password('socio123')
-            
-            db.session.add(directiva)
-            db.session.add(socio)
-            db.session.commit()
+            # Crear usuarios de prueba si no existen
+            from models import User
+            if not User.query.first():
+                # Usuario directiva
+                directiva = User(
+                    nombre='Administrador',
+                    email='admin@asociacion.com',
+                    rol='directiva',
+                    fecha_alta=datetime.now(),
+                    fecha_validez=datetime.now() + timedelta(days=365)
+                )
+                directiva.set_password('admin123')
+                
+                # Usuario socio
+                socio = User(
+                    nombre='Juan Pérez',
+                    email='juan@email.com',
+                    rol='socio',
+                    fecha_alta=datetime.now(),
+                    fecha_validez=datetime.now() + timedelta(days=30)
+                )
+                socio.set_password('socio123')
+                
+                db.session.add(directiva)
+                db.session.add(socio)
+                db.session.commit()
+    except Exception as e:
+        # Si hay un error al inicializar la BD, lo registramos pero no fallamos
+        # La app seguirá funcionando y la BD se inicializará en el primer request
+        import sys
+        print(f"Warning: Error inicializando base de datos: {e}", file=sys.stderr)
     
     return app
 
-if __name__ == '__main__':
+# Crear la instancia de la app para gunicorn
+try:
     app = create_app()
+except Exception as e:
+    import sys
+    print(f"Error crítico al crear la aplicación: {e}", file=sys.stderr)
+    raise
+
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') == 'development'
     app.run(host='0.0.0.0', port=port, debug=debug)
