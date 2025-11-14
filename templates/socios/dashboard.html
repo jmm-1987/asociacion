@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Panel - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-speedometer2 me-2"></i>
+        Mi Panel
+    </h1>
+    <div class="text-muted">
+        <i class="bi bi-person-circle me-1"></i>
+        Bienvenido/a, {{ current_user.nombre }}
+    </div>
+</div>
+
+<!-- Información personal -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Mi Suscripción</h5>
+                        <h6>Válida hasta: {{ current_user.fecha_validez.strftime('%d/%m/%Y') }}</h6>
+                        {% if current_user.suscripcion_vencida() %}
+                            <span class="badge bg-danger">Vencida</span>
+                        {% elif current_user.suscripcion_por_vencer() %}
+                            <span class="badge bg-warning">Por Vencer</span>
+                        {% else %}
+                            <span class="badge bg-success">Activa</span>
+                        {% endif %}
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-person-check-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Mis Actividades</h5>
+                        <h2>{{ actividades_inscrito|length }}</h2>
+                        <small>actividades inscrito</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-calendar-check-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Actividades disponibles -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-event text-primary me-2"></i>
+                    Actividades Disponibles
+                </h5>
+                <a href="{{ url_for('socios.actividades') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-list me-1"></i>
+                    Ver Todas
+                </a>
+            </div>
+            <div class="card-body">
+                {% if actividades_disponibles %}
+                    <div class="list-group list-group-flush">
+                        {% for actividad in actividades_disponibles[:5] %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ actividad.nombre }}</h6>
+                                        {% if actividad.descripcion %}
+                                            <small class="text-muted">{{ actividad.descripcion[:100] }}{% if actividad.descripcion|length > 100 %}...{% endif %}</small><br>
+                                        {% endif %}
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar me-1"></i>
+                                            {{ actividad.fecha.strftime('%d/%m/%Y %H:%M') }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-info mb-2">
+                                            {{ actividad.numero_inscritos() }}/{{ actividad.aforo_maximo }}
+                                        </span><br>
+                                        {% if actividad.usuario_inscrito(current_user.id) %}
+                                            <span class="badge bg-success">Inscrito</span>
+                                        {% elif actividad.tiene_plazas_disponibles() %}
+                                            <form method="POST" action="{{ url_for('socios.inscribir_actividad', actividad_id=actividad.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-plus-circle me-1"></i>
+                                                    Inscribirse
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span class="badge bg-danger">Completo</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if actividades_disponibles|length > 5 %}
+                        <div class="mt-3 text-center">
+                            <a href="{{ url_for('socios.actividades') }}" class="btn btn-outline-primary">
+                                Ver más actividades ({{ actividades_disponibles|length - 5 }} más)
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x text-muted fs-1"></i>
+                        <p class="mt-2">No hay actividades disponibles</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Mis actividades inscrito -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-check text-success me-2"></i>
+                    Mis Actividades
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if actividades_inscrito %}
+                    <div class="list-group list-group-flush">
+                        {% for actividad in actividades_inscrito[:5] %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ actividad.nombre }}</h6>
+                                    <small class="text-muted">{{ actividad.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </div>
+                                <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-no-loading="true"
+                                            onclick="return confirm('¿Estás seguro de cancelar tu inscripción?')">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if actividades_inscrito|length > 5 %}
+                        <div class="mt-3">
+                            <a href="{{ url_for('socios.mis_actividades') }}" class="btn btn-outline-success btn-sm">
+                                Ver todas ({{ actividades_inscrito|length }})
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x text-muted fs-1"></i>
+                        <p class="mt-2">No estás inscrito en ninguna actividad</p>
+                        <a href="{{ url_for('socios.actividades') }}" class="btn btn-success btn-sm">
+                            <i class="bi bi-calendar-plus me-1"></i>
+                            Ver Actividades
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

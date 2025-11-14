@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Actividades - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-calendar-event me-2"></i>
+        Gestión de Actividades
+    </h1>
+    <a href="{{ url_for('admin.nueva_actividad') }}" class="btn btn-primary">
+        <i class="bi bi-calendar-plus me-2"></i>
+        Nueva Actividad
+    </a>
+</div>
+
+<!-- Buscador -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.gestion_actividades') }}" class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" name="search" 
+                           placeholder="Buscar por nombre, descripción o fecha..." 
+                           value="{{ search_query or '' }}" id="searchInput">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-1"></i>
+                        Buscar
+                    </button>
+                    {% if search_query %}
+                        <a href="{{ url_for('admin.gestion_actividades') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Limpiar
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if search_query %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Búsqueda:</strong> "{{ search_query }}" - {{ actividades|length }} resultado(s) encontrado(s)
+            </div>
+        {% endif %}
+        
+        {% if actividades %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Actividad</th>
+                            <th>Fecha</th>
+                            <th>Inscritos</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for actividad in actividades %}
+                            <tr>
+                                <td>
+                                    <h6 class="mb-1">{{ actividad.nombre }}</h6>
+                                    {% if actividad.descripcion %}
+                                        <small class="text-muted">{{ actividad.descripcion[:100] }}{% if actividad.descripcion|length > 100 %}...{% endif %}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div>{{ actividad.fecha.strftime('%d/%m/%Y') }}</div>
+                                    <small class="text-muted">{{ actividad.fecha.strftime('%H:%M') }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ actividad.numero_inscritos() }}/{{ actividad.aforo_maximo }}
+                                    </span>
+                                    {% if actividad.tiene_plazas_disponibles() %}
+                                        <br><small class="text-success">{{ actividad.plazas_disponibles() }} plazas libres</small>
+                                    {% else %}
+                                        <br><small class="text-danger">Completo</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if actividad.fecha > ahora %}
+                                        <span class="badge bg-success">Próxima</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Pasada</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('actividades.detalle_actividad', actividad_id=actividad.id) }}" 
+                                           class="btn btn-outline-primary btn-sm" title="Ver Detalles">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.editar_actividad', actividad_id=actividad.id) }}" 
+                                           class="btn btn-outline-warning btn-sm" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.ver_inscritos', actividad_id=actividad.id) }}" 
+                                           class="btn btn-outline-info btn-sm" title="Ver Inscritos">
+                                            <i class="bi bi-people"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                title="Eliminar"
+                                                onclick="confirmarEliminar({{ actividad.id }}, '{{ actividad.nombre }}')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-calendar-x text-muted fs-1"></i>
+                <h4 class="mt-3">No hay actividades registradas</h4>
+                <p>Comienza creando la primera actividad para la asociación.</p>
+                <a href="{{ url_for('admin.nueva_actividad') }}" class="btn btn-primary">
+                    <i class="bi bi-calendar-plus me-2"></i>
+                    Crear Primera Actividad
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar la actividad <strong id="nombreActividad"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Esta acción eliminará también todas las inscripciones asociadas y no se puede deshacer.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminar" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>
+                        Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmarEliminar(actividadId, nombre) {
+    document.getElementById('nombreActividad').textContent = nombre;
+    document.getElementById('formEliminar').action = "{{ url_for('admin.eliminar_actividad', actividad_id=0) }}".replace('0', actividadId);
+    new bootstrap.Modal(document.getElementById('modalEliminar')).show();
+}
+
+// Búsqueda dinámica en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            // Solo buscar si hay al menos 2 caracteres
+            if (query.length >= 2 || query.length === 0) {
+                searchTimeout = setTimeout(function() {
+                    // Realizar búsqueda automática
+                    const form = searchInput.closest('form');
+                    if (form) {
+                        form.submit();
+                    }
+                }, 500); // Esperar 500ms después del último carácter
+            }
+        });
+        
+        // Limpiar búsqueda con Escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                const form = this.closest('form');
+                if (form) {
+                    form.submit();
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

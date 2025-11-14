@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: asociacion-vecinos
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.7
+      - key: SECRET_KEY
+        generateValue: true
+    healthCheckPath: /
+
+databases:
+  - name: asociacion-db
+    plan: free
+    databaseName: asociacion
+    user: asociacion_user
+

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Inscritos en {{ actividad.nombre }} - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-people me-2"></i>
+        Inscritos en {{ actividad.nombre }}
+    </h1>
+    <a href="{{ url_for('admin.gestion_actividades') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-2"></i>
+        Volver
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-check me-2"></i>
+                    Lista de Inscritos ({{ inscripciones|length }}/{{ actividad.aforo_maximo }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if inscripciones %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Fecha de Inscripción</th>
+                                    <th>Asistencia</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inscripcion in inscripciones %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ inscripcion.usuario.nombre }}</strong>
+                                        </td>
+                                        <td>{{ inscripcion.usuario.email }}</td>
+                                        <td>{{ inscripcion.fecha_inscripcion.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>
+                                            {% if inscripcion.asiste %}
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle me-1"></i>
+                                                    Asistió
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-circle me-1"></i>
+                                                    No asistió
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="POST" action="{{ url_for('admin.marcar_asistencia', actividad_id=actividad.id, inscripcion_id=inscripcion.id) }}" style="display: inline;">
+                                                {% if inscripcion.asiste %}
+                                                    <button type="submit" class="btn btn-outline-warning btn-sm" data-no-loading="true"
+                                                            onclick="return confirm('¿Marcar como NO asistió?')">
+                                                        <i class="bi bi-x-circle me-1"></i>
+                                                        No Asistió
+                                                    </button>
+                                                {% else %}
+                                                    <button type="submit" class="btn btn-outline-success btn-sm" data-no-loading="true"
+                                                            onclick="return confirm('¿Marcar como asistió?')">
+                                                        <i class="bi bi-check-circle me-1"></i>
+                                                        Asistió
+                                                    </button>
+                                                {% endif %}
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-people text-muted fs-1"></i>
+                        <h4 class="mt-3">No hay inscripciones</h4>
+                        <p>Aún no se ha inscrito nadie en esta actividad.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Información de la Actividad
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ actividad.nombre }}</h6>
+                {% if actividad.descripcion %}
+                    <p class="text-muted">{{ actividad.descripcion }}</p>
+                {% endif %}
+                
+                <hr>
+                
+                <div class="mb-2">
+                    <strong>Fecha:</strong><br>
+                    {{ actividad.fecha.strftime('%d/%m/%Y') }} a las {{ actividad.fecha.strftime('%H:%M') }}
+                </div>
+                
+                <div class="mb-2">
+                    <strong>Aforo:</strong><br>
+                    <span class="badge bg-info">
+                        {{ inscripciones|length }}/{{ actividad.aforo_maximo }}
+                    </span>
+                </div>
+                
+                <div class="mb-2">
+                    <strong>Plazas disponibles:</strong><br>
+                    {% if actividad.tiene_plazas_disponibles() %}
+                        <span class="badge bg-success">{{ actividad.plazas_disponibles() }}</span>
+                    {% else %}
+                        <span class="badge bg-danger">Completo</span>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-2">
+                    <strong>Asistencia:</strong><br>
+                    {% set asistentes = inscripciones|selectattr('asiste')|list|length %}
+                    <span class="badge bg-success">{{ asistentes }}</span> asistieron<br>
+                    <span class="badge bg-secondary">{{ inscripciones|length - asistentes }}</span> no asistieron
+                </div>
+                
+                <hr>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('actividades.detalle_actividad', actividad_id=actividad.id) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye me-1"></i>
+                        Ver Detalles
+                    </a>
+                    <a href="{{ url_for('admin.editar_actividad', actividad_id=actividad.id) }}" 
+                       class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-pencil me-1"></i>
+                        Editar Actividad
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

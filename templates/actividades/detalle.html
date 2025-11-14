@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}{{ actividad.nombre }} - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    {{ actividad.nombre }}
+                </h3>
+            </div>
+            <div class="card-body">
+                {% if actividad.descripcion %}
+                    <h5>Descripción</h5>
+                    <p class="text-muted">{{ actividad.descripcion }}</p>
+                    <hr>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-calendar me-2"></i>Fecha</h6>
+                        <p class="text-muted">{{ actividad.fecha.strftime('%d/%m/%Y') }}</p>
+                        
+                        <h6><i class="bi bi-clock me-2"></i>Hora</h6>
+                        <p class="text-muted">{{ actividad.fecha.strftime('%H:%M') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-people me-2"></i>Aforo</h6>
+                        <p class="text-muted">{{ actividad.aforo_maximo }} personas máximo</p>
+                        
+                        <h6><i class="bi bi-person-check me-2"></i>Inscritos</h6>
+                        <p class="text-muted">{{ actividad.numero_inscritos() }} personas inscritas</p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Plazas Disponibles</h5>
+                                <h2 class="text-{% if actividad.tiene_plazas_disponibles() %}success{% else %}danger{% endif %}">
+                                    {{ actividad.plazas_disponibles() }}
+                                </h2>
+                                {% if not actividad.tiene_plazas_disponibles() %}
+                                    <p class="text-danger mb-0">Actividad completa</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Estado</h5>
+                                {% if actividad.fecha > ahora %}
+                                    <span class="badge bg-success fs-6">Próxima</span>
+                                {% else %}
+                                    <span class="badge bg-secondary fs-6">Realizada</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear me-2"></i>
+                    Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if current_user.is_socio() %}
+                    {% if inscrito %}
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <strong>¡Estás inscrito!</strong>
+                        </div>
+                        {% if actividad.fecha > moment() %}
+                            <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}">
+                                <button type="submit" class="btn btn-danger w-100 mb-3"
+                                        onclick="return confirm('¿Estás seguro de cancelar tu inscripción?')">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Cancelar Inscripción
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% elif actividad.tiene_plazas_disponibles() and actividad.fecha > ahora %}
+                        <form method="POST" action="{{ url_for('socios.inscribir_actividad', actividad_id=actividad.id) }}">
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Inscribirse
+                            </button>
+                        </form>
+                    {% elif not actividad.tiene_plazas_disponibles() %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            No hay plazas disponibles
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Esta actividad ya ha terminado
+                        </div>
+                    {% endif %}
+                {% endif %}
+                
+                <div class="d-grid gap-2">
+                    {% if current_user.is_directiva() %}
+                        <a href="{{ url_for('admin.ver_inscritos', actividad_id=actividad.id) }}" 
+                           class="btn btn-outline-info">
+                            <i class="bi bi-people me-2"></i>
+                            Ver Inscritos
+                        </a>
+                        <a href="{{ url_for('admin.editar_actividad', actividad_id=actividad.id) }}" 
+                           class="btn btn-outline-warning">
+                            <i class="bi bi-pencil me-2"></i>
+                            Editar Actividad
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% if current_user.is_directiva() %}{{ url_for('admin.gestion_actividades') }}{% else %}{{ url_for('socios.actividades') }}{% endif %}" 
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Información adicional -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Información
+                </h6>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">
+                    <strong>Creada:</strong> {{ actividad.fecha_creacion.strftime('%d/%m/%Y') }}<br>
+                    <strong>Porcentaje ocupado:</strong> 
+                    <div class="progress mt-1" style="height: 8px;">
+                        <div class="progress-bar" style="width: {{ (actividad.numero_inscritos() / actividad.aforo_maximo * 100)|round }}%"></div>
+                    </div>
+                    {{ (actividad.numero_inscritos() / actividad.aforo_maximo * 100)|round }}%
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

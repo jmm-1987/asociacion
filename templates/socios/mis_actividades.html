@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Actividades - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-person-check me-2"></i>
+        Mis Actividades
+    </h1>
+    <div>
+        <a href="{{ url_for('socios.actividades') }}" class="btn btn-primary">
+            <i class="bi bi-calendar-plus me-2"></i>
+            Ver Todas las Actividades
+        </a>
+        <a href="{{ url_for('socios.dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i>
+            Volver al Panel
+        </a>
+    </div>
+</div>
+
+{% if actividades %}
+    <div class="row">
+        {% for actividad in actividades %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">{{ actividad.nombre }}</h6>
+                        <span class="badge bg-success">Inscrito</span>
+                    </div>
+                    <div class="card-body">
+                        {% if actividad.descripcion %}
+                            <p class="card-text text-muted">{{ actividad.descripcion }}</p>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>
+                                {{ actividad.fecha.strftime('%d/%m/%Y') }}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ actividad.fecha.strftime('%H:%M') }}
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-info">
+                                {{ actividad.numero_inscritos() }}/{{ actividad.aforo_maximo }} inscritos
+                            </span>
+                        </div>
+                        
+                        {% if actividad.fecha > ahora %}
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Actividad programada
+                                </small>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <small>
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Actividad realizada
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('actividades.detalle_actividad', actividad_id=actividad.id) }}" 
+                               class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-eye me-1"></i>
+                                Ver Detalles
+                            </a>
+                            
+                            {% if actividad.fecha > ahora %}
+                                <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100" data-no-loading="true"
+                                            onclick="return confirm('¿Estás seguro de cancelar tu inscripción en esta actividad?')">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Cancelar Inscripción
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Información:</strong> Puedes cancelar tu inscripción hasta 24 horas antes de la actividad.
+    </div>
+{% else %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-calendar-x text-muted fs-1"></i>
+        <h4 class="mt-3">No estás inscrito en ninguna actividad</h4>
+        <p>Explora las actividades disponibles y únete a las que te interesen.</p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+            <a href="{{ url_for('socios.actividades') }}" class="btn btn-primary">
+                <i class="bi bi-calendar-plus me-2"></i>
+                Ver Actividades Disponibles
+            </a>
+            <a href="{{ url_for('socios.dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Volver al Panel
+            </a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

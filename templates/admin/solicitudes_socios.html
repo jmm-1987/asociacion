@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitudes Nuevos Socios - Panel Directiva{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-person-plus-fill me-2 text-primary"></i>
+        Solicitudes Nuevos Socios
+    </h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Volver al Panel
+    </a>
+</div>
+
+<!-- Estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0">Por Confirmar</h5>
+                        <h2 class="mb-0">{{ total_por_confirmar }}</h2>
+                    </div>
+                    <div>
+                        <i class="bi bi-clock-history fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0">Confirmadas</h5>
+                        <h2 class="mb-0">{{ total_activas }}</h2>
+                    </div>
+                    <div>
+                        <i class="bi bi-check-circle-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0">Rechazadas</h5>
+                        <h2 class="mb-0">{{ total_rechazadas }}</h2>
+                    </div>
+                    <div>
+                        <i class="bi bi-x-circle-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('admin.solicitudes_socios', estado='por_confirmar') }}" 
+               class="btn {% if estado_filtro == 'por_confirmar' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                <i class="bi bi-clock-history me-1"></i>
+                Por Confirmar ({{ total_por_confirmar }})
+            </a>
+            <a href="{{ url_for('admin.solicitudes_socios', estado='activa') }}" 
+               class="btn {% if estado_filtro == 'activa' %}btn-success{% else %}btn-outline-success{% endif %}">
+                <i class="bi bi-check-circle me-1"></i>
+                Confirmadas ({{ total_activas }})
+            </a>
+            <a href="{{ url_for('admin.solicitudes_socios', estado='rechazada') }}" 
+               class="btn {% if estado_filtro == 'rechazada' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                <i class="bi bi-x-circle me-1"></i>
+                Rechazadas ({{ total_rechazadas }})
+            </a>
+            <a href="{{ url_for('admin.solicitudes_socios', estado='todas') }}" 
+               class="btn {% if estado_filtro == 'todas' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                <i class="bi bi-list-ul me-1"></i>
+                Todas
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Solicitudes -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list-ul me-2"></i>
+            Solicitudes ({{ solicitudes|length }})
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if solicitudes %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Nombre Completo</th>
+                            <th>Móvil</th>
+                            <th>Miembros Familia</th>
+                            <th>Forma de Pago</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in solicitudes %}
+                        <tr>
+                            <td>
+                                <small class="text-muted">
+                                    {{ solicitud.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}
+                                </small>
+                            </td>
+                            <td>
+                                <strong>{{ solicitud.nombre }} {{ solicitud.primer_apellido }}</strong>
+                                {% if solicitud.segundo_apellido %}
+                                    {{ solicitud.segundo_apellido }}
+                                {% endif %}
+                            </td>
+                            <td>{{ solicitud.movil }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ solicitud.miembros_unidad_familiar }}</span>
+                            </td>
+                            <td>
+                                {% if solicitud.forma_de_pago == 'bizum' %}
+                                    <span class="badge bg-primary">Bizum</span>
+                                {% elif solicitud.forma_de_pago == 'transferencia' %}
+                                    <span class="badge bg-success">Transferencia</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Contado</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if solicitud.estado == 'por_confirmar' %}
+                                    <span class="badge bg-warning">Por Confirmar</span>
+                                {% elif solicitud.estado == 'activa' %}
+                                    <span class="badge bg-success">Confirmada</span>
+                                    {% if solicitud.fecha_confirmacion %}
+                                        <br><small class="text-muted">{{ solicitud.fecha_confirmacion.strftime('%d/%m/%Y') }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-danger">Rechazada</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if solicitud.estado == 'por_confirmar' %}
+                                    <form method="POST" action="{{ url_for('admin.confirmar_solicitud', solicitud_id=solicitud.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-success btn-sm" 
+                                                onclick="return confirm('¿Confirmar esta solicitud y crear el usuario?')">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Confirmar
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.rechazar_solicitud', solicitud_id=solicitud.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm" 
+                                                onclick="return confirm('¿Rechazar esta solicitud?')">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Rechazar
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox text-muted fs-1"></i>
+                <p class="text-muted mt-3">No hay solicitudes con este estado.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

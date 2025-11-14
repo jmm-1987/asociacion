@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Directiva - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-speedometer2 me-2"></i>
+        Panel de Directiva
+    </h1>
+    <div class="text-muted">
+        <i class="bi bi-person-badge me-1"></i>
+        Bienvenido/a, {{ current_user.nombre }}
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Socios</h5>
+                        <h2>{{ total_socios }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-people-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Actividades</h5>
+                        <h2>{{ total_actividades }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-calendar-event-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Socios próximos a vencer -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Socios Próximos a Vencer
+                </h5>
+                <span class="badge bg-warning">{{ socios_por_vencer|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if socios_por_vencer %}
+                    <div class="list-group list-group-flush">
+                        {% for socio in socios_por_vencer %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ socio.nombre }}</h6>
+                                    <small class="text-muted">{{ socio.email }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">Vence:</small><br>
+                                    <span class="badge bg-danger">
+                                        {{ socio.fecha_validez.strftime('%d/%m/%Y') }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('admin.gestion_socios') }}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-people me-1"></i>
+                            Gestionar Socios
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                        <p class="mt-2">No hay socios próximos a vencer</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Actividades -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-event text-primary me-2"></i>
+                    Actividades Recientes
+                </h5>
+                <a href="{{ url_for('admin.gestion_actividades') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus me-1"></i>
+                    Nueva
+                </a>
+            </div>
+            <div class="card-body">
+                {% if actividades %}
+                    <div class="list-group list-group-flush">
+                        {% for actividad in actividades[:5] %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ actividad.nombre }}</h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar me-1"></i>
+                                            {{ actividad.fecha.strftime('%d/%m/%Y %H:%M') }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-info">
+                                            {{ actividad.numero_inscritos() }}/{{ actividad.aforo_maximo }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('admin.gestion_actividades') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list me-1"></i>
+                            Ver Todas
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x text-muted fs-1"></i>
+                        <p class="mt-2">No hay actividades registradas</p>
+                        <a href="{{ url_for('admin.nueva_actividad') }}" class="btn btn-primary">
+                            <i class="bi bi-plus me-1"></i>
+                            Crear Primera Actividad
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning text-warning me-2"></i>
+                    Acciones Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin.nueva_actividad') }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-calendar-plus me-2"></i>
+                            Nueva Actividad
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin.nuevo_socio') }}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-person-plus me-2"></i>
+                            Nuevo Socio
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin.gestion_socios') }}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-people me-2"></i>
+                            Gestionar Socios
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin.gestion_actividades') }}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-list-ul me-2"></i>
+                            Ver Actividades
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Solicitudes Nuevos Socios -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-plus-fill me-2"></i>
+                    Solicitudes Nuevos Socios
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="mb-0">Gestiona las solicitudes de inscripción de nuevos socios.</p>
+                    {% if solicitudes_pendientes > 0 %}
+                        <span class="badge bg-danger fs-6">{{ solicitudes_pendientes }} pendiente{{ 's' if solicitudes_pendientes > 1 else '' }}</span>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('admin.solicitudes_socios') }}" class="btn btn-warning">
+                    <i class="bi bi-inbox me-2"></i>
+                    Ver Solicitudes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

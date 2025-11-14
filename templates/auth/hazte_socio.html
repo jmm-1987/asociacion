@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Hazte Socio - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h2 class="mb-0 text-white fw-bold">
+                    <i class="bi bi-person-plus-fill me-2"></i>
+                    Solicitud de Inscripción
+                </h2>
+                <p class="text-white-50 mb-0 mt-2">Únete a nuestra asociación de vecinos</p>
+            </div>
+            <div class="card-body p-5">
+                <form method="POST" id="formSolicitud">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label fw-bold">
+                                <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" 
+                                   required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                   title="Solo letras y espacios">
+                            <small class="text-muted">Se convertirá automáticamente a mayúsculas sin acentos</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="primer_apellido" class="form-label fw-bold">
+                                <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" 
+                                   required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                   title="Solo letras y espacios">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="segundo_apellido" class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Segundo Apellido
+                        </label>
+                        <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
+                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="movil" class="form-label fw-bold">
+                            <i class="bi bi-phone me-1"></i>Móvil <span class="text-danger">*</span>
+                        </label>
+                        <input type="tel" class="form-control" id="movil" name="movil" 
+                               required pattern="[0-9]{9}" maxlength="9" 
+                               title="9 dígitos numéricos" placeholder="123456789">
+                        <small class="text-muted">9 dígitos sin espacios ni guiones</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="miembros_unidad_familiar" class="form-label fw-bold">
+                            <i class="bi bi-people me-1"></i>Miembros de la Unidad Familiar <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" id="miembros_unidad_familiar" 
+                               name="miembros_unidad_familiar" required min="1" 
+                               title="Número positivo">
+                        <small class="text-muted">Incluyéndote a ti</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="forma_de_pago" class="form-label fw-bold">
+                            <i class="bi bi-credit-card me-1"></i>Forma de Pago <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="forma_de_pago" name="forma_de_pago" required>
+                            <option value="">Selecciona una opción</option>
+                            <option value="bizum">Bizum</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="contado">Contado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-send-fill me-2"></i>
+                            Enviar Solicitud
+                        </button>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Volver
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Convertir a mayúsculas y quitar acentos en tiempo real
+    const camposTexto = ['nombre', 'primer_apellido', 'segundo_apellido'];
+    
+    camposTexto.forEach(function(campoId) {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.addEventListener('input', function(e) {
+                let texto = e.target.value;
+                // Quitar acentos
+                texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                // Convertir a mayúsculas
+                texto = texto.toUpperCase();
+                e.target.value = texto;
+            });
+        }
+    });
+    
+    // Validar móvil (solo números)
+    const movil = document.getElementById('movil');
+    if (movil) {
+        movil.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Socios - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-people me-2"></i>
+        Gestión de Socios
+    </h1>
+    <a href="{{ url_for('admin.nuevo_socio') }}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-2"></i>
+        Nuevo Socio
+    </a>
+</div>
+
+<!-- Buscador -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.gestion_socios') }}" class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" name="search" 
+                           placeholder="Buscar por nombre, email o fecha de validez..." 
+                           value="{{ search_query or '' }}" id="searchInput">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-1"></i>
+                        Buscar
+                    </button>
+                    {% if search_query %}
+                        <a href="{{ url_for('admin.gestion_socios') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Limpiar
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if search_query %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Búsqueda:</strong> "{{ search_query }}" - {{ socios|length }} resultado(s) encontrado(s)
+            </div>
+        {% endif %}
+        
+        {% if socios %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Fecha de Alta</th>
+                            <th>Fecha de Validez</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for socio in socios %}
+                            <tr>
+                                <td>
+                                    <strong>{{ socio.nombre }}</strong>
+                                </td>
+                                <td>{{ socio.email }}</td>
+                                <td>{{ socio.fecha_alta.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <span class="{% if socio.suscripcion_vencida() %}text-danger{% elif socio.suscripcion_por_vencer() %}text-warning{% else %}text-success{% endif %}">
+                                        {{ socio.fecha_validez.strftime('%d/%m/%Y') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if socio.suscripcion_vencida() %}
+                                        <span class="badge bg-danger">Vencida</span>
+                                    {% elif socio.suscripcion_por_vencer() %}
+                                        <span class="badge bg-warning">Por Vencer</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Activa</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.renovar_socio', socio_id=socio.id) }}" 
+                                       class="btn btn-outline-warning btn-sm" 
+                                       title="Renovar Suscripción">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-people text-muted fs-1"></i>
+                <h4 class="mt-3">No hay socios registrados</h4>
+                <p>Comienza agregando el primer socio a la asociación.</p>
+                <a href="{{ url_for('admin.nuevo_socio') }}" class="btn btn-primary">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Registrar Primer Socio
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Búsqueda dinámica en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            // Solo buscar si hay al menos 2 caracteres
+            if (query.length >= 2 || query.length === 0) {
+                searchTimeout = setTimeout(function() {
+                    // Realizar búsqueda automática
+                    const form = searchInput.closest('form');
+                    if (form) {
+                        form.submit();
+                    }
+                }, 500); // Esperar 500ms después del último carácter
+            }
+        });
+        
+        // Limpiar búsqueda con Escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                const form = this.closest('form');
+                if (form) {
+                    form.submit();
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

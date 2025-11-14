@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - Asociación de Vecinos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-person-circle me-2"></i>
+                    Mi Perfil
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información Personal</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Nombre:</strong></td>
+                                <td>{{ usuario.nombre }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ usuario.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rol:</strong></td>
+                                <td>
+                                    <span class="badge bg-primary">Socio</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Información de Suscripción</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Fecha de Alta:</strong></td>
+                                <td>{{ usuario.fecha_alta.strftime('%d/%m/%Y') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Válida hasta:</strong></td>
+                                <td>
+                                    <span class="{% if usuario.suscripcion_vencida() %}text-danger{% elif usuario.suscripcion_por_vencer() %}text-warning{% else %}text-success{% endif %}">
+                                        {{ usuario.fecha_validez.strftime('%d/%m/%Y') }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Estado:</strong></td>
+                                <td>
+                                    {% if usuario.suscripcion_vencida() %}
+                                        <span class="badge bg-danger">Vencida</span>
+                                    {% elif usuario.suscripcion_por_vencer() %}
+                                        <span class="badge bg-warning">Por Vencer</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Activa</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if usuario.suscripcion_por_vencer() %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Atención:</strong> Tu suscripción está próxima a vencer. 
+                        Contacta con la directiva para renovarla.
+                    </div>
+                {% elif usuario.suscripcion_vencida() %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <strong>Importante:</strong> Tu suscripción ha vencido. 
+                        Contacta con la directiva para renovarla y mantenerte activo en la asociación.
+                    </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('socios.dashboard') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Volver al Panel
+                    </a>
+                    <div>
+                        <a href="{{ url_for('socios.actividades') }}" class="btn btn-primary">
+                            <i class="bi bi-calendar-event me-2"></i>
+                            Ver Actividades
+                        </a>
+                        <a href="{{ url_for('socios.mis_actividades') }}" class="btn btn-success">
+                            <i class="bi bi-person-check me-2"></i>
+                            Mis Actividades
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
