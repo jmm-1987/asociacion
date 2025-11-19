@@ -13,12 +13,23 @@ class User(UserMixin, db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    password_plain = db.Column(db.String(255), nullable=True)  # Contraseña en texto plano (solo para mostrar a admin)
     rol = db.Column(db.String(20), nullable=False)  # 'directiva' o 'socio'
     fecha_alta = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     fecha_validez = db.Column(db.DateTime, nullable=False)
+    ano_nacimiento = db.Column(db.Integer, nullable=True)  # Año de nacimiento para verificar edad en actividades
+    fecha_nacimiento = db.Column(db.Date, nullable=True)  # Fecha completa de nacimiento
+    numero_socio = db.Column(db.String(10), unique=True, nullable=True)  # Número de socio (0001, 0002, etc.)
     
     # Relaciones
     inscripciones = db.relationship('Inscripcion', backref='usuario', lazy=True, cascade='all, delete-orphan')
+    
+    def calcular_edad(self):
+        """Calcula la edad del usuario basándose en el año de nacimiento"""
+        if not self.ano_nacimiento:
+            return None
+        año_actual = datetime.now().year
+        return año_actual - self.ano_nacimiento
     
     def set_password(self, password):
         """Hash y guarda la contraseña"""
@@ -56,6 +67,8 @@ class Actividad(db.Model):
     descripcion = db.Column(db.Text, nullable=True)
     fecha = db.Column(db.DateTime, nullable=False)
     aforo_maximo = db.Column(db.Integer, nullable=False)
+    edad_minima = db.Column(db.Integer, nullable=True)  # Edad mínima requerida (None = sin restricción)
+    edad_maxima = db.Column(db.Integer, nullable=True)  # Edad máxima permitida (None = sin restricción)
     fecha_creacion = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     # Relaciones
@@ -74,8 +87,35 @@ class Actividad(db.Model):
         return len(self.inscripciones)
     
     def usuario_inscrito(self, user_id):
-        """Verifica si un usuario está inscrito"""
-        return Inscripcion.query.filter_by(user_id=user_id, actividad_id=self.id).first() is not None
+        """Verifica si un usuario está inscrito (sin beneficiario)"""
+        return Inscripcion.query.filter_by(user_id=user_id, actividad_id=self.id, beneficiario_id=None).first() is not None
+    
+    def beneficiario_inscrito(self, beneficiario_id):
+        """Verifica si un beneficiario está inscrito"""
+        return Inscripcion.query.filter_by(beneficiario_id=beneficiario_id, actividad_id=self.id).first() is not None
+    
+    def tiene_restriccion_edad(self):
+        """Verifica si la actividad tiene restricción de edad"""
+        return self.edad_minima is not None or self.edad_maxima is not None
+    
+    def puede_inscribirse_por_edad(self, ano_nacimiento):
+        """Verifica si una persona con un año de nacimiento puede inscribirse"""
+        if not self.tiene_restriccion_edad():
+            return True, None
+        
+        if ano_nacimiento is None:
+            return False, "No se puede verificar la edad. Falta el año de nacimiento."
+        
+        año_actual = datetime.now().year
+        edad = año_actual - ano_nacimiento
+        
+        if self.edad_minima is not None and edad < self.edad_minima:
+            return False, f"La edad mínima requerida es {self.edad_minima} años. Tienes {edad} años."
+        
+        if self.edad_maxima is not None and edad > self.edad_maxima:
+            return False, f"La edad máxima permitida es {self.edad_maxima} años. Tienes {edad} años."
+        
+        return True, None
     
     def __repr__(self):
         return f'<Actividad {self.nombre}>'
@@ -86,14 +126,20 @@ class Inscripcion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     actividad_id = db.Column(db.Integer, db.ForeignKey('actividades.id'), nullable=False)
+    beneficiario_id = db.Column(db.Integer, db.ForeignKey('beneficiarios.id'), nullable=True)  # Opcional: si es inscripción de beneficiario
     fecha_inscripcion = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     asiste = db.Column(db.Boolean, nullable=False, default=False)  # Campo para marcar asistencia
     
-    # Restricción única para evitar inscripciones duplicadas
-    __table_args__ = (db.UniqueConstraint('user_id', 'actividad_id', name='unique_user_actividad'),)
+    # Relaciones
+    beneficiario = db.relationship('Beneficiario', backref='inscripciones')
+    
+    # Restricción única: un usuario o beneficiario solo puede inscribirse una vez por actividad
+    __table_args__ = (db.UniqueConstraint('user_id', 'actividad_id', 'beneficiario_id', name='unique_inscripcion'),)
     
     def __repr__(self):
-        return f'<Inscripcion {self.user_id} - {self.actividad_id}>'
+        if self.beneficiario_id:
+            return f'<Inscripcion Beneficiario {self.beneficiario_id} - Actividad {self.actividad_id}>'
+        return f'<Inscripcion User {self.user_id} - Actividad {self.actividad_id}>'
 
 class SolicitudSocio(db.Model):
     __tablename__ = 'solicitudes_socio'
@@ -103,11 +149,47 @@ class SolicitudSocio(db.Model):
     primer_apellido = db.Column(db.String(100), nullable=False)
     segundo_apellido = db.Column(db.String(100), nullable=True)
     movil = db.Column(db.String(20), nullable=False)
+    fecha_nacimiento = db.Column(db.Date, nullable=True)  # Fecha de nacimiento del socio
     miembros_unidad_familiar = db.Column(db.Integer, nullable=False)
     forma_de_pago = db.Column(db.String(20), nullable=False)  # 'bizum', 'transferencia', 'contado'
     estado = db.Column(db.String(20), nullable=False, default='por_confirmar')  # 'por_confirmar', 'activa', 'rechazada'
     fecha_solicitud = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     fecha_confirmacion = db.Column(db.DateTime, nullable=True)
+    password_solicitud = db.Column(db.String(255), nullable=True)  # Contraseña temporal hasta confirmación
+    
+    # Relaciones
+    beneficiarios = db.relationship('BeneficiarioSolicitud', backref='solicitud', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f'<SolicitudSocio {self.nombre} {self.primer_apellido} - {self.estado}>'
+
+class BeneficiarioSolicitud(db.Model):
+    __tablename__ = 'beneficiarios_solicitud'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    solicitud_id = db.Column(db.Integer, db.ForeignKey('solicitudes_socio.id'), nullable=False)
+    nombre = db.Column(db.String(100), nullable=False)
+    primer_apellido = db.Column(db.String(100), nullable=False)
+    segundo_apellido = db.Column(db.String(100), nullable=True)
+    ano_nacimiento = db.Column(db.Integer, nullable=False)
+    
+    def __repr__(self):
+        return f'<BeneficiarioSolicitud {self.nombre} {self.primer_apellido}>'
+
+class Beneficiario(db.Model):
+    __tablename__ = 'beneficiarios'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    socio_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    nombre = db.Column(db.String(100), nullable=False)
+    primer_apellido = db.Column(db.String(100), nullable=False)
+    segundo_apellido = db.Column(db.String(100), nullable=True)
+    ano_nacimiento = db.Column(db.Integer, nullable=False)
+    fecha_validez = db.Column(db.DateTime, nullable=False)  # Misma fecha que el socio
+    numero_beneficiario = db.Column(db.String(15), unique=True, nullable=True)  # Número de beneficiario (0001-1, 0001-2, etc.)
+    
+    # Relaciones
+    socio = db.relationship('User', backref='beneficiarios')
+    
+    def __repr__(self):
+        return f'<Beneficiario {self.nombre} {self.primer_apellido}>'

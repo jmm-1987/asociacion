@@ -42,6 +42,41 @@
                         </div>
                     </div>
                     
+                    <div class="card mb-3 border-info">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="bi bi-calendar-range me-2"></i>
+                                Restricción de Edad (Opcional)
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="edad_minima" class="form-label">Edad Mínima</label>
+                                        <input type="number" class="form-control" id="edad_minima" name="edad_minima" 
+                                               min="0" max="120" placeholder="Sin restricción">
+                                        <div class="form-text">Dejar vacío si no hay restricción mínima.</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="edad_maxima" class="form-label">Edad Máxima</label>
+                                        <input type="number" class="form-control" id="edad_maxima" name="edad_maxima" 
+                                               min="0" max="120" placeholder="Sin restricción">
+                                        <div class="form-text">Dejar vacío si no hay restricción máxima.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mb-0">
+                                <small>
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Si se especifica un rango de edad, solo podrán inscribirse socios o beneficiarios que cumplan con ese rango.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('admin.gestion_actividades') }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left me-2"></i>

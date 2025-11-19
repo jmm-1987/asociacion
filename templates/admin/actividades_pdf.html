@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Actividades</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #333;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        .header .fecha {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        .info {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .badge-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .badge-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .text-muted {
+            color: #666;
+            font-size: 10px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Listado de Actividades</h1>
+        <div class="fecha">Generado el {{ ahora.strftime('%d/%m/%Y a las %H:%M') }}</div>
+    </div>
+
+    <div class="info">
+        <strong>Total de actividades:</strong> {{ actividades|length }}
+    </div>
+
+    {% if actividades %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Actividad</th>
+                    <th>Fecha y Hora</th>
+                    <th>Inscritos</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for actividad in actividades %}
+                    <tr>
+                        <td>
+                            <strong>{{ actividad.nombre }}</strong>
+                            {% if actividad.descripcion %}
+                                <br><span class="text-muted">{{ actividad.descripcion[:80] }}{% if actividad.descripcion|length > 80 %}...{% endif %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ actividad.fecha.strftime('%d/%m/%Y') }}<br>
+                            <span class="text-muted">{{ actividad.fecha.strftime('%H:%M') }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-info">{{ actividad.numero_inscritos() }}/{{ actividad.aforo_maximo }}</span>
+                            {% if actividad.tiene_plazas_disponibles() %}
+                                <br><span class="text-muted">{{ actividad.plazas_disponibles() }} plazas libres</span>
+                            {% else %}
+                                <br><span class="text-muted">Completo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if actividad.fecha > ahora %}
+                                <span class="badge badge-success">Próxima</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Pasada</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div style="text-align: center; padding: 40px; color: #666;">
+            <p>No hay actividades registradas.</p>
+        </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Asociación de Vecinos - Listado de Actividades</p>
+    </div>
+</body>
+</html>
+
+

@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Solicitud - Panel Directiva{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-pencil-square me-2 text-warning"></i>
+        Editar Solicitud
+    </h1>
+    <a href="{{ url_for('admin.ver_solicitud', solicitud_id=solicitud.id) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Volver
+    </a>
+</div>
+
+<form method="POST" id="formEditarSolicitud">
+    <!-- Datos del Socio -->
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-person-badge me-2"></i>
+                Datos del Nuevo Socio
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="nombre" class="form-label fw-bold">
+                        <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" 
+                           value="{{ solicitud.nombre }}" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                           title="Solo letras y espacios">
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label for="primer_apellido" class="form-label fw-bold">
+                        <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" 
+                           value="{{ solicitud.primer_apellido }}" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                           title="Solo letras y espacios">
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label for="segundo_apellido" class="form-label fw-bold">
+                        <i class="bi bi-person me-1"></i>Segundo Apellido
+                    </label>
+                    <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
+                           value="{{ solicitud.segundo_apellido or '' }}" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                           title="Solo letras y espacios">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="movil" class="form-label fw-bold">
+                        <i class="bi bi-phone me-1"></i>Móvil <span class="text-danger">*</span>
+                    </label>
+                    <input type="tel" class="form-control" id="movil" name="movil" 
+                           value="{{ solicitud.movil }}" required pattern="[0-9]{9}" maxlength="9" 
+                           title="9 dígitos numéricos" placeholder="123456789">
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="miembros_unidad_familiar" class="form-label fw-bold">
+                        <i class="bi bi-people me-1"></i>Miembros de la Unidad Familiar <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" class="form-control" id="miembros_unidad_familiar" 
+                           name="miembros_unidad_familiar" value="{{ solicitud.miembros_unidad_familiar }}" 
+                           required min="1" title="Número positivo" onchange="actualizarBeneficiarios()">
+                    <small class="text-muted">Incluyéndote a ti</small>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="forma_de_pago" class="form-label fw-bold">
+                    <i class="bi bi-credit-card me-1"></i>Forma de Pago <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="forma_de_pago" name="forma_de_pago" required>
+                    <option value="">Selecciona una opción</option>
+                    <option value="bizum" {% if solicitud.forma_de_pago == 'bizum' %}selected{% endif %}>Bizum</option>
+                    <option value="transferencia" {% if solicitud.forma_de_pago == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                    <option value="contado" {% if solicitud.forma_de_pago == 'contado' %}selected{% endif %}>Contado</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Beneficiarios -->
+    <div id="beneficiarios-container" class="card mb-4 border-success">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-people-fill me-2"></i>
+                Datos de los Beneficiarios
+            </h5>
+        </div>
+        <div class="card-body" id="beneficiarios-body">
+            {% for beneficiario in beneficiarios %}
+            <div class="beneficiario-item mb-4 p-3 border rounded" data-index="{{ loop.index }}">
+                <h6 class="mb-3 text-success">
+                    <i class="bi bi-person-circle me-2"></i>
+                    Beneficiario {{ loop.index }}
+                </h6>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control beneficiario-nombre" 
+                               name="beneficiario_nombre_{{ loop.index }}" 
+                               value="{{ beneficiario.nombre }}" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control beneficiario-primer-apellido" 
+                               name="beneficiario_primer_apellido_{{ loop.index }}" 
+                               value="{{ beneficiario.primer_apellido }}" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Segundo Apellido
+                        </label>
+                        <input type="text" class="form-control beneficiario-segundo-apellido" 
+                               name="beneficiario_segundo_apellido_{{ loop.index }}" 
+                               value="{{ beneficiario.segundo_apellido or '' }}" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar me-1"></i>Año de Nacimiento <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control beneficiario-ano" 
+                               name="beneficiario_ano_{{ loop.index }}" 
+                               value="{{ beneficiario.ano_nacimiento }}" required min="1900" 
+                               max="{{ datetime.now().year }}" title="Año válido">
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-save me-2"></i>
+            Guardar Cambios
+        </button>
+        <a href="{{ url_for('admin.ver_solicitud', solicitud_id=solicitud.id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle me-2"></i>
+            Cancelar
+        </a>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para limpiar espacios al final (trim)
+    function limpiarEspacios(campo) {
+        if (campo && campo.value) {
+            campo.value = campo.value.trim();
+        }
+    }
+    
+    // Convertir a mayúsculas y quitar acentos
+    const camposTexto = ['nombre', 'primer_apellido', 'segundo_apellido'];
+    
+    camposTexto.forEach(function(campoId) {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            // Limpiar espacios al salir del campo
+            campo.addEventListener('blur', function(e) {
+                limpiarEspacios(e.target);
+            });
+            
+            campo.addEventListener('input', function(e) {
+                let texto = e.target.value;
+                // Preservar la ñ antes de quitar acentos
+                texto = texto.replace(/ñ/g, 'Ñ_TEMP_').replace(/Ñ/g, 'Ñ_TEMP_');
+                // Quitar acentos
+                texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                // Restaurar la ñ
+                texto = texto.replace(/Ñ_TEMP_/g, 'Ñ');
+                // Convertir a mayúsculas
+                texto = texto.toUpperCase();
+                e.target.value = texto;
+            });
+        }
+    });
+    
+    // Validar móvil (solo números) y limpiar espacios
+    const movil = document.getElementById('movil');
+    if (movil) {
+        movil.addEventListener('blur', function(e) {
+            limpiarEspacios(e.target);
+        });
+        movil.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    }
+    
+    // Limpiar espacios en todos los campos al enviar el formulario
+    const form = document.getElementById('formEditarSolicitud');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const todosLosCampos = form.querySelectorAll('input[type="text"], input[type="tel"], input[type="number"]');
+            todosLosCampos.forEach(function(campo) {
+                limpiarEspacios(campo);
+            });
+        });
+    }
+    
+    // Función para generar campos de beneficiario
+    function generarCamposBeneficiario(index) {
+        return `
+            <div class="beneficiario-item mb-4 p-3 border rounded" data-index="${index}">
+                <h6 class="mb-3 text-success">
+                    <i class="bi bi-person-circle me-2"></i>
+                    Beneficiario ${index}
+                </h6>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control beneficiario-nombre" 
+                               name="beneficiario_nombre_${index}" 
+                               required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control beneficiario-primer-apellido" 
+                               name="beneficiario_primer_apellido_${index}" 
+                               required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Segundo Apellido
+                        </label>
+                        <input type="text" class="form-control beneficiario-segundo-apellido" 
+                               name="beneficiario_segundo_apellido_${index}" 
+                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar me-1"></i>Año de Nacimiento <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control beneficiario-ano" 
+                               name="beneficiario_ano_${index}" 
+                               required min="1900" max="${new Date().getFullYear()}" 
+                               title="Año válido">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Función para actualizar contenedores de beneficiarios
+    window.actualizarBeneficiarios = function() {
+        const miembrosInput = document.getElementById('miembros_unidad_familiar');
+        const container = document.getElementById('beneficiarios-container');
+        const body = document.getElementById('beneficiarios-body');
+        
+        if (!miembrosInput || !container || !body) return;
+        
+        const miembros = parseInt(miembrosInput.value) || 0;
+        const beneficiarios = Math.max(0, miembros - 1);
+        
+        if (beneficiarios > 0) {
+            container.style.display = 'block';
+            // Solo actualizar si no hay beneficiarios existentes
+            if (body.querySelectorAll('.beneficiario-item').length === 0) {
+                body.innerHTML = '';
+                for (let i = 1; i <= beneficiarios; i++) {
+                    body.innerHTML += generarCamposBeneficiario(i);
+                }
+                
+                // Aplicar conversión a mayúsculas y limpieza de espacios a los nuevos campos
+                const nuevosCampos = body.querySelectorAll('.beneficiario-nombre, .beneficiario-primer-apellido, .beneficiario-segundo-apellido');
+                nuevosCampos.forEach(function(campo) {
+                    campo.addEventListener('blur', function(e) {
+                        limpiarEspacios(e.target);
+                    });
+                    campo.addEventListener('input', function(e) {
+                        let texto = e.target.value;
+                        // Preservar la ñ antes de quitar acentos
+                        texto = texto.replace(/ñ/g, 'Ñ_TEMP_').replace(/Ñ/g, 'Ñ_TEMP_');
+                        // Quitar acentos
+                        texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        // Restaurar la ñ
+                        texto = texto.replace(/Ñ_TEMP_/g, 'Ñ');
+                        // Convertir a mayúsculas
+                        texto = texto.toUpperCase();
+                        e.target.value = texto;
+                    });
+                });
+                
+                // Limpiar espacios en campos de año de nacimiento generados
+                const nuevosCamposAno = body.querySelectorAll('.beneficiario-ano');
+                nuevosCamposAno.forEach(function(campo) {
+                    campo.addEventListener('blur', function(e) {
+                        limpiarEspacios(e.target);
+                    });
+                });
+            }
+        } else {
+            container.style.display = 'none';
+            body.innerHTML = '';
+        }
+    };
+    
+    // Aplicar conversión a mayúsculas a beneficiarios existentes
+    const beneficiariosCampos = document.querySelectorAll('.beneficiario-nombre, .beneficiario-primer-apellido, .beneficiario-segundo-apellido');
+    beneficiariosCampos.forEach(function(campo) {
+        campo.addEventListener('input', function(e) {
+            let texto = e.target.value;
+            texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            texto = texto.toUpperCase();
+            e.target.value = texto;
+        });
+    });
+    
+    // Inicializar visibilidad de beneficiarios
+    const miembrosInput = document.getElementById('miembros_unidad_familiar');
+    if (miembrosInput) {
+        miembrosInput.addEventListener('input', actualizarBeneficiarios);
+        miembrosInput.addEventListener('change', actualizarBeneficiarios);
+        actualizarBeneficiarios();
+    }
+});
+</script>
+{% endblock %}
+

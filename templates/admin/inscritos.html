@@ -8,10 +8,16 @@
         <i class="bi bi-people me-2"></i>
         Inscritos en {{ actividad.nombre }}
     </h1>
-    <a href="{{ url_for('admin.gestion_actividades') }}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left me-2"></i>
-        Volver
-    </a>
+    <div class="btn-group">
+        <a href="{{ url_for('admin.inscritos_pdf', actividad_id=actividad.id) }}" class="btn btn-outline-danger" target="_blank">
+            <i class="bi bi-file-pdf me-2"></i>
+            Imprimir PDF
+        </a>
+        <a href="{{ url_for('admin.gestion_actividades') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i>
+            Volver
+        </a>
+    </div>
 </div>
 
 <div class="row">
@@ -32,46 +38,49 @@
                                     <th>Nombre</th>
                                     <th>Email</th>
                                     <th>Fecha de Inscripción</th>
-                                    <th>Asistencia</th>
-                                    <th>Acciones</th>
+                                    <th class="text-center">Asistencia</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for inscripcion in inscripciones %}
                                     <tr>
                                         <td>
-                                            <strong>{{ inscripcion.usuario.nombre }}</strong>
-                                        </td>
-                                        <td>{{ inscripcion.usuario.email }}</td>
-                                        <td>{{ inscripcion.fecha_inscripcion.strftime('%d/%m/%Y %H:%M') }}</td>
-                                        <td>
-                                            {% if inscripcion.asiste %}
-                                                <span class="badge bg-success">
-                                                    <i class="bi bi-check-circle me-1"></i>
-                                                    Asistió
-                                                </span>
+                                            {% if inscripcion.beneficiario %}
+                                                <strong>{{ inscripcion.beneficiario.nombre }} {{ inscripcion.beneficiario.primer_apellido }}{% if inscripcion.beneficiario.segundo_apellido %} {{ inscripcion.beneficiario.segundo_apellido }}{% endif %}</strong>
+                                                <br><small class="text-success">Beneficiario de {{ inscripcion.usuario.nombre }}</small>
+                                                {% if inscripcion.beneficiario.numero_beneficiario %}
+                                                    <br><small class="text-muted">Nº: <strong>{{ inscripcion.beneficiario.numero_beneficiario }}</strong></small>
+                                                {% endif %}
                                             {% else %}
-                                                <span class="badge bg-secondary">
-                                                    <i class="bi bi-circle me-1"></i>
-                                                    No asistió
-                                                </span>
+                                                <strong>{{ inscripcion.usuario.nombre }}</strong>
+                                                {% if inscripcion.usuario.numero_socio %}
+                                                    <br><small class="text-muted">Nº Socio: <strong>{{ inscripcion.usuario.numero_socio }}</strong></small>
+                                                {% endif %}
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <form method="POST" action="{{ url_for('admin.marcar_asistencia', actividad_id=actividad.id, inscripcion_id=inscripcion.id) }}" style="display: inline;">
-                                                {% if inscripcion.asiste %}
-                                                    <button type="submit" class="btn btn-outline-warning btn-sm" data-no-loading="true"
-                                                            onclick="return confirm('¿Marcar como NO asistió?')">
-                                                        <i class="bi bi-x-circle me-1"></i>
-                                                        No Asistió
-                                                    </button>
-                                                {% else %}
-                                                    <button type="submit" class="btn btn-outline-success btn-sm" data-no-loading="true"
-                                                            onclick="return confirm('¿Marcar como asistió?')">
-                                                        <i class="bi bi-check-circle me-1"></i>
-                                                        Asistió
-                                                    </button>
-                                                {% endif %}
+                                            {% if inscripcion.beneficiario %}
+                                                <small class="text-muted">Beneficiario</small>
+                                            {% else %}
+                                                {{ inscripcion.usuario.email }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ inscripcion.fecha_inscripcion.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td class="text-center">
+                                            <form method="POST" action="{{ url_for('admin.marcar_asistencia', actividad_id=actividad.id, inscripcion_id=inscripcion.id) }}" style="display: inline;" class="asistencia-form">
+                                                <label class="checkbox-custom" style="cursor: pointer;">
+                                                    <input type="checkbox" 
+                                                           {% if inscripcion.asiste %}checked{% endif %}
+                                                           onchange="this.closest('form').submit();"
+                                                           style="display: none;">
+                                                    <span class="checkbox-icon">
+                                                        {% if inscripcion.asiste %}
+                                                            <i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-circle" style="font-size: 1.5rem; color: #6c757d;"></i>
+                                                        {% endif %}
+                                                    </span>
+                                                </label>
                                             </form>
                                         </td>
                                     </tr>
@@ -152,4 +161,56 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .checkbox-custom {
+        display: inline-block;
+        position: relative;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .checkbox-icon {
+        display: inline-block;
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+    
+    .checkbox-custom:hover .checkbox-icon {
+        transform: scale(1.1);
+    }
+    
+    .checkbox-custom input[type="checkbox"]:checked + .checkbox-icon {
+        animation: checkPulse 0.3s ease;
+    }
+    
+    @keyframes checkPulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.2);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .asistencia-form {
+        margin: 0;
+    }
+</style>
+<script>
+    // Mejorar la experiencia del checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('.asistencia-form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // No mostrar confirmación, solo enviar
+                // El cambio visual se verá al recargar
+            });
+        });
+    });
+</script>
 {% endblock %}

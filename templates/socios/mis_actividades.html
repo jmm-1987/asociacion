@@ -68,6 +68,23 @@
                         {% endif %}
                     </div>
                     <div class="card-footer">
+                        {# Mostrar quién está inscrito #}
+                        {% if inscripciones_por_actividad[actividad.id] %}
+                            <div class="mb-2">
+                                <small class="text-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Inscrito{% if inscripciones_por_actividad[actividad.id]|length > 1 %}s{% endif %}:
+                                    {% for insc in inscripciones_por_actividad[actividad.id] %}
+                                        {% if insc.beneficiario %}
+                                            {{ insc.beneficiario.nombre }}{% if not loop.last %}, {% endif %}
+                                        {% else %}
+                                            Tú{% if not loop.last %}, {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </small>
+                            </div>
+                        {% endif %}
+                        
                         <div class="d-grid gap-2">
                             <a href="{{ url_for('actividades.detalle_actividad', actividad_id=actividad.id) }}" 
                                class="btn btn-outline-info btn-sm">
@@ -76,13 +93,42 @@
                             </a>
                             
                             {% if actividad.fecha > ahora %}
-                                <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100" data-no-loading="true"
-                                            onclick="return confirm('¿Estás seguro de cancelar tu inscripción en esta actividad?')">
-                                        <i class="bi bi-x-circle me-1"></i>
-                                        Cancelar Inscripción
-                                    </button>
-                                </form>
+                                {% if inscripciones_por_actividad[actividad.id]|length > 1 %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-danger btn-sm w-100 dropdown-toggle" type="button" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Cancelar Inscripción
+                                        </button>
+                                        <ul class="dropdown-menu w-100">
+                                            {% for insc in inscripciones_por_actividad[actividad.id] %}
+                                                <li>
+                                                    <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}" style="display: inline;">
+                                                        <input type="hidden" name="beneficiario_id" value="{% if insc.beneficiario %}{{ insc.beneficiario.id }}{% else %}socio{% endif %}">
+                                                        <button type="submit" class="dropdown-item" 
+                                                                onclick="return confirm('¿Cancelar esta inscripción?')">
+                                                            {% if insc.beneficiario %}
+                                                                {{ insc.beneficiario.nombre }}
+                                                            {% else %}
+                                                                Tú
+                                                            {% endif %}
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% else %}
+                                    {% set insc = inscripciones_por_actividad[actividad.id][0] %}
+                                    <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}">
+                                        <input type="hidden" name="beneficiario_id" value="{% if insc.beneficiario %}{{ insc.beneficiario.id }}{% else %}socio{% endif %}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm w-100" data-no-loading="true"
+                                                onclick="return confirm('¿Estás seguro de cancelar esta inscripción?')">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Cancelar Inscripción
+                                        </button>
+                                    </form>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>
@@ -93,7 +139,7 @@
     
     <div class="alert alert-info">
         <i class="bi bi-info-circle me-2"></i>
-        <strong>Información:</strong> Puedes cancelar tu inscripción hasta 24 horas antes de la actividad.
+        <strong>Información:</strong> Puedes cancelar tu inscripción en cualquier momento.
     </div>
 {% else %}
     <div class="text-center text-muted py-5">

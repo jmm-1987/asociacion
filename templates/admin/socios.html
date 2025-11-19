@@ -14,7 +14,7 @@
     </a>
 </div>
 
-<!-- Buscador -->
+<!-- Buscador y Opciones -->
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ url_for('admin.gestion_socios') }}" class="row g-3">
@@ -43,6 +43,15 @@
                 </div>
             </div>
         </form>
+        <hr>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="mostrarBeneficiarios" 
+                   onchange="toggleBeneficiarios()">
+            <label class="form-check-label" for="mostrarBeneficiarios">
+                <i class="bi bi-people-fill me-1"></i>
+                Mostrar beneficiarios
+            </label>
+        </div>
     </div>
 </div>
 
@@ -70,11 +79,19 @@
                     </thead>
                     <tbody>
                         {% for socio in socios %}
-                            <tr>
+                            <tr class="socio-row" data-socio-id="{{ socio.id }}">
                                 <td>
                                     <strong>{{ socio.nombre }}</strong>
+                                    {% if socio.numero_socio %}
+                                        <br><small class="text-muted">Nº Socio: <strong>{{ socio.numero_socio }}</strong></small>
+                                    {% endif %}
                                 </td>
-                                <td>{{ socio.email }}</td>
+                                <td>
+                                    {{ socio.email }}
+                                    {% if socio.password_plain %}
+                                        <br><small class="text-info">Contraseña: <code>{{ socio.password_plain }}</code></small>
+                                    {% endif %}
+                                </td>
                                 <td>{{ socio.fecha_alta.strftime('%d/%m/%Y') }}</td>
                                 <td>
                                     <span class="{% if socio.suscripcion_vencida() %}text-danger{% elif socio.suscripcion_por_vencer() %}text-warning{% else %}text-success{% endif %}">
@@ -98,6 +115,29 @@
                                     </a>
                                 </td>
                             </tr>
+                            {% if socio.beneficiarios_lista %}
+                                <tr class="beneficiarios-row" data-socio-id="{{ socio.id }}" style="display: none;">
+                                    <td colspan="6" class="bg-light">
+                                        <div class="ps-4 py-2">
+                                            <strong class="text-success">
+                                                <i class="bi bi-people-fill me-2"></i>
+                                                Beneficiarios ({{ socio.beneficiarios_lista|length }}):
+                                            </strong>
+                                            <div class="mt-2">
+                                                {% for beneficiario in socio.beneficiarios_lista %}
+                                                    <div class="d-inline-block me-3 mb-2">
+                                                        <span class="badge bg-success">
+                                                            {% if beneficiario.numero_beneficiario %}<strong>{{ beneficiario.numero_beneficiario }}</strong> - {% endif %}
+                                                            {{ beneficiario.nombre }} {{ beneficiario.primer_apellido }}{% if beneficiario.segundo_apellido %} {{ beneficiario.segundo_apellido }}{% endif %}
+                                                            <small class="ms-1">({{ beneficiario.ano_nacimiento }})</small>
+                                                        </span>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
@@ -119,6 +159,22 @@
 
 {% block scripts %}
 <script>
+// Función para mostrar/ocultar beneficiarios
+function toggleBeneficiarios() {
+    const checkbox = document.getElementById('mostrarBeneficiarios');
+    const beneficiariosRows = document.querySelectorAll('.beneficiarios-row');
+    
+    if (checkbox.checked) {
+        beneficiariosRows.forEach(function(row) {
+            row.style.display = '';
+        });
+    } else {
+        beneficiariosRows.forEach(function(row) {
+            row.style.display = 'none';
+        });
+    }
+}
+
 // Búsqueda dinámica en tiempo real
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -152,6 +208,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Inicializar estado de beneficiarios (ocultos por defecto)
+    toggleBeneficiarios();
 });
 </script>
 {% endblock %}

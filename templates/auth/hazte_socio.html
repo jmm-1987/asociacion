@@ -15,66 +15,128 @@
             </div>
             <div class="card-body p-5">
                 <form method="POST" id="formSolicitud">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="nombre" class="form-label fw-bold">
-                                <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" id="nombre" name="nombre" 
-                                   required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                                   title="Solo letras y espacios">
-                            <small class="text-muted">Se convertirá automáticamente a mayúsculas sin acentos</small>
+                    <!-- Sección: Datos del nuevo socio -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-badge me-2"></i>
+                                Datos del nuevo socio
+                            </h5>
                         </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="primer_apellido" class="form-label fw-bold">
-                                <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" 
-                                   required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                                   title="Solo letras y espacios">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="nombre" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" 
+                                           required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                    <small class="text-muted">Se convertirá automáticamente a mayúsculas sin acentos</small>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="primer_apellido" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" 
+                                           required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="segundo_apellido" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Segundo Apellido
+                                    </label>
+                                    <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
+                                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="movil" class="form-label fw-bold">
+                                        <i class="bi bi-phone me-1"></i>Móvil <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="tel" class="form-control" id="movil" name="movil" 
+                                           required pattern="[0-9]{9}" maxlength="9" 
+                                           title="9 dígitos numéricos" placeholder="123456789">
+                                    <small class="text-muted">9 dígitos sin espacios ni guiones - Si el pago se realiza por Bizum, el número debe coincidir con el de la cuenta que lo efectúa</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="miembros_unidad_familiar" class="form-label fw-bold">
+                                        <i class="bi bi-people me-1"></i>Miembros de la Unidad Familiar <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="miembros_unidad_familiar" 
+                                           name="miembros_unidad_familiar" required min="1" 
+                                           title="Número positivo">
+                                    <small class="text-muted">Incluyéndote a ti</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="password" class="form-label fw-bold">
+                                        <i class="bi bi-lock me-1"></i>Contraseña <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           required minlength="6" 
+                                           title="Mínimo 6 caracteres">
+                                    <small class="text-muted">Mínimo 6 caracteres. Esta será tu contraseña para acceder al sistema.</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="password_confirm" class="form-label fw-bold">
+                                        <i class="bi bi-lock-fill me-1"></i>Confirmar Contraseña <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="password" class="form-control" id="password_confirm" name="password_confirm" 
+                                           required minlength="6" 
+                                           title="Debe coincidir con la contraseña">
+                                    <small class="text-muted">Repite la contraseña para confirmar</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fecha_nacimiento" class="form-label fw-bold">
+                                        <i class="bi bi-calendar me-1"></i>Fecha de Nacimiento <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" 
+                                           required>
+                                    <small class="text-muted">Necesaria para validar edad en actividades con restricción</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="forma_de_pago" class="form-label fw-bold">
+                                        <i class="bi bi-credit-card me-1"></i>Forma de Pago <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="forma_de_pago" name="forma_de_pago" required>
+                                        <option value="">Selecciona una opción</option>
+                                        <option value="bizum">Bizum</option>
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="contado">Contado</option>
+                                    </select>
+                                    <small class="text-muted">9 dígitos sin espacios ni guiones - Si el pago se realiza por Bizum, el número debe coincidir con el de la cuenta que lo efectúa</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="segundo_apellido" class="form-label fw-bold">
-                            <i class="bi bi-person me-1"></i>Segundo Apellido
-                        </label>
-                        <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
-                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                               title="Solo letras y espacios">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="movil" class="form-label fw-bold">
-                            <i class="bi bi-phone me-1"></i>Móvil <span class="text-danger">*</span>
-                        </label>
-                        <input type="tel" class="form-control" id="movil" name="movil" 
-                               required pattern="[0-9]{9}" maxlength="9" 
-                               title="9 dígitos numéricos" placeholder="123456789">
-                        <small class="text-muted">9 dígitos sin espacios ni guiones</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="miembros_unidad_familiar" class="form-label fw-bold">
-                            <i class="bi bi-people me-1"></i>Miembros de la Unidad Familiar <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" class="form-control" id="miembros_unidad_familiar" 
-                               name="miembros_unidad_familiar" required min="1" 
-                               title="Número positivo">
-                        <small class="text-muted">Incluyéndote a ti</small>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="forma_de_pago" class="form-label fw-bold">
-                            <i class="bi bi-credit-card me-1"></i>Forma de Pago <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select" id="forma_de_pago" name="forma_de_pago" required>
-                            <option value="">Selecciona una opción</option>
-                            <option value="bizum">Bizum</option>
-                            <option value="transferencia">Transferencia</option>
-                            <option value="contado">Contado</option>
-                        </select>
+                    <!-- Sección: Beneficiarios (se muestra dinámicamente) -->
+                    <div id="beneficiarios-container" style="display: none;">
+                        <div class="card mb-4 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-people-fill me-2"></i>
+                                    Datos de los Beneficiarios
+                                </h5>
+                            </div>
+                            <div class="card-body" id="beneficiarios-body">
+                                <!-- Los contenedores de beneficiarios se generan dinámicamente aquí -->
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="d-grid gap-2">
@@ -97,16 +159,32 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Función para limpiar espacios al final (trim)
+    function limpiarEspacios(campo) {
+        if (campo && campo.value) {
+            campo.value = campo.value.trim();
+        }
+    }
+    
     // Convertir a mayúsculas y quitar acentos en tiempo real
     const camposTexto = ['nombre', 'primer_apellido', 'segundo_apellido'];
     
     camposTexto.forEach(function(campoId) {
         const campo = document.getElementById(campoId);
         if (campo) {
+            // Limpiar espacios al salir del campo
+            campo.addEventListener('blur', function(e) {
+                limpiarEspacios(e.target);
+            });
+            
             campo.addEventListener('input', function(e) {
                 let texto = e.target.value;
+                // Preservar la ñ antes de quitar acentos
+                texto = texto.replace(/ñ/g, 'Ñ_TEMP_').replace(/Ñ/g, 'Ñ_TEMP_');
                 // Quitar acentos
                 texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                // Restaurar la ñ
+                texto = texto.replace(/Ñ_TEMP_/g, 'Ñ');
                 // Convertir a mayúsculas
                 texto = texto.toUpperCase();
                 e.target.value = texto;
@@ -114,14 +192,173 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Validar móvil (solo números)
+    // Validar móvil (solo números) y limpiar espacios
     const movil = document.getElementById('movil');
     if (movil) {
+        movil.addEventListener('blur', function(e) {
+            limpiarEspacios(e.target);
+        });
         movil.addEventListener('input', function(e) {
             e.target.value = e.target.value.replace(/\D/g, '');
         });
     }
+    
+    // Limpiar espacios en todos los campos de texto al enviar el formulario
+    // Validar contraseñas
+    const password = document.getElementById('password');
+    const passwordConfirm = document.getElementById('password_confirm');
+    
+    function validarContrasenas() {
+        if (password && passwordConfirm) {
+            if (password.value !== passwordConfirm.value) {
+                passwordConfirm.setCustomValidity('Las contraseñas no coinciden');
+            } else {
+                passwordConfirm.setCustomValidity('');
+            }
+        }
+    }
+    
+    if (password) {
+        password.addEventListener('input', validarContrasenas);
+    }
+    if (passwordConfirm) {
+        passwordConfirm.addEventListener('input', validarContrasenas);
+    }
+    
+    const form = document.getElementById('formSolicitud');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Limpiar espacios de todos los campos de texto
+            const todosLosCampos = form.querySelectorAll('input[type="text"], input[type="tel"], input[type="number"]');
+            todosLosCampos.forEach(function(campo) {
+                limpiarEspacios(campo);
+            });
+            
+            // Validar contraseñas antes de enviar
+            if (password && passwordConfirm && password.value !== passwordConfirm.value) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden. Por favor, verifica que ambas contraseñas sean iguales.');
+                return false;
+            }
+        });
+    }
+    
+    // Función para generar campos de beneficiario
+    function generarCamposBeneficiario(index) {
+        return `
+            <div class="beneficiario-item mb-4 p-3 border rounded" data-index="${index}">
+                <h6 class="mb-3 text-success">
+                    <i class="bi bi-person-circle me-2"></i>
+                    Beneficiario ${index}
+                </h6>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control beneficiario-nombre" 
+                               name="beneficiario_nombre_${index}" 
+                               required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control beneficiario-primer-apellido" 
+                               name="beneficiario_primer_apellido_${index}" 
+                               required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person me-1"></i>Segundo Apellido
+                        </label>
+                        <input type="text" class="form-control beneficiario-segundo-apellido" 
+                               name="beneficiario_segundo_apellido_${index}" 
+                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               title="Solo letras y espacios">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar me-1"></i>Año de Nacimiento <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control beneficiario-ano" 
+                               name="beneficiario_ano_${index}" 
+                               required min="1900" max="${new Date().getFullYear()}" 
+                               title="Año válido">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Función para actualizar contenedores de beneficiarios
+    function actualizarBeneficiarios() {
+        const miembrosInput = document.getElementById('miembros_unidad_familiar');
+        const container = document.getElementById('beneficiarios-container');
+        const body = document.getElementById('beneficiarios-body');
+        
+        if (!miembrosInput || !container || !body) return;
+        
+        const miembros = parseInt(miembrosInput.value) || 0;
+        const beneficiarios = Math.max(0, miembros - 1); // Restar 1 porque el socio no es beneficiario
+        
+        if (beneficiarios > 0) {
+            container.style.display = 'block';
+            body.innerHTML = '';
+            
+            for (let i = 1; i <= beneficiarios; i++) {
+                body.innerHTML += generarCamposBeneficiario(i);
+            }
+            
+            // Aplicar conversión a mayúsculas y limpieza de espacios a los nuevos campos
+            const nuevosCampos = body.querySelectorAll('.beneficiario-nombre, .beneficiario-primer-apellido, .beneficiario-segundo-apellido');
+            nuevosCampos.forEach(function(campo) {
+                campo.addEventListener('blur', function(e) {
+                    limpiarEspacios(e.target);
+                });
+                campo.addEventListener('input', function(e) {
+                    let texto = e.target.value;
+                    // Preservar la ñ antes de quitar acentos
+                    texto = texto.replace(/ñ/g, 'Ñ_TEMP_').replace(/Ñ/g, 'Ñ_TEMP_');
+                    // Quitar acentos
+                    texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    // Restaurar la ñ
+                    texto = texto.replace(/Ñ_TEMP_/g, 'Ñ');
+                    // Convertir a mayúsculas
+                    texto = texto.toUpperCase();
+                    e.target.value = texto;
+                });
+            });
+            
+            // Limpiar espacios en campos de año de nacimiento
+            const camposAno = body.querySelectorAll('.beneficiario-ano');
+            camposAno.forEach(function(campo) {
+                campo.addEventListener('blur', function(e) {
+                    limpiarEspacios(e.target);
+                });
+            });
+        } else {
+            container.style.display = 'none';
+            body.innerHTML = '';
+        }
+    }
+    
+    // Escuchar cambios en el número de miembros
+    const miembrosInput = document.getElementById('miembros_unidad_familiar');
+    if (miembrosInput) {
+        miembrosInput.addEventListener('input', actualizarBeneficiarios);
+        miembrosInput.addEventListener('change', actualizarBeneficiarios);
+        // Ejecutar al cargar si ya hay un valor
+        if (miembrosInput.value) {
+            actualizarBeneficiarios();
+        }
+    }
 });
 </script>
 {% endblock %}
+
 

@@ -21,8 +21,14 @@
                                 <td><strong>Nombre:</strong></td>
                                 <td>{{ usuario.nombre }}</td>
                             </tr>
+                            {% if usuario.numero_socio %}
                             <tr>
-                                <td><strong>Email:</strong></td>
+                                <td><strong>Número de Socio:</strong></td>
+                                <td><span class="badge bg-secondary">{{ usuario.numero_socio }}</span></td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td><strong>Nombre de Usuario:</strong></td>
                                 <td>{{ usuario.email }}</td>
                             </tr>
                             <tr>

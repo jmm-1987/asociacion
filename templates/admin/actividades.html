@@ -8,10 +8,16 @@
         <i class="bi bi-calendar-event me-2"></i>
         Gestión de Actividades
     </h1>
-    <a href="{{ url_for('admin.nueva_actividad') }}" class="btn btn-primary">
-        <i class="bi bi-calendar-plus me-2"></i>
-        Nueva Actividad
-    </a>
+    <div class="btn-group">
+        <a href="{{ url_for('admin.actividades_pdf') }}" class="btn btn-outline-danger" target="_blank">
+            <i class="bi bi-file-pdf me-2"></i>
+            Imprimir PDF
+        </a>
+        <a href="{{ url_for('admin.nueva_actividad') }}" class="btn btn-primary">
+            <i class="bi bi-calendar-plus me-2"></i>
+            Nueva Actividad
+        </a>
+    </div>
 </div>
 
 <!-- Buscador -->
@@ -74,6 +80,19 @@
                                     <h6 class="mb-1">{{ actividad.nombre }}</h6>
                                     {% if actividad.descripcion %}
                                         <small class="text-muted">{{ actividad.descripcion[:100] }}{% if actividad.descripcion|length > 100 %}...{% endif %}</small>
+                                    {% endif %}
+                                    {% if actividad.tiene_restriccion_edad() %}
+                                        <br>
+                                        <small class="badge bg-info">
+                                            <i class="bi bi-calendar-range me-1"></i>
+                                            {% if actividad.edad_minima and actividad.edad_maxima %}
+                                                {{ actividad.edad_minima }}-{{ actividad.edad_maxima }} años
+                                            {% elif actividad.edad_minima %}
+                                                +{{ actividad.edad_minima }} años
+                                            {% elif actividad.edad_maxima %}
+                                                -{{ actividad.edad_maxima }} años
+                                            {% endif %}
+                                        </small>
                                     {% endif %}
                                 </td>
                                 <td>

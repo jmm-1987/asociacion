@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscritos en {{ actividad.nombre }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #333;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #333;
+        }
+        .header .fecha {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        .actividad-info {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            border-left: 4px solid #333;
+        }
+        .actividad-info h2 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .actividad-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item strong {
+            display: block;
+            font-size: 24px;
+            color: #333;
+        }
+        .stat-item span {
+            font-size: 11px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .badge-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .text-muted {
+            color: #666;
+            font-size: 10px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+        }
+        .no-inscritos {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Listado de Inscritos</h1>
+        <div class="fecha">Generado el {{ ahora.strftime('%d/%m/%Y a las %H:%M') }}</div>
+    </div>
+
+    <div class="actividad-info">
+        <h2>{{ actividad.nombre }}</h2>
+        {% if actividad.descripcion %}
+            <p><strong>Descripción:</strong> {{ actividad.descripcion }}</p>
+        {% endif %}
+        <p><strong>Fecha:</strong> {{ actividad.fecha.strftime('%d/%m/%Y a las %H:%M') }}</p>
+        <p><strong>Aforo máximo:</strong> {{ actividad.aforo_maximo }} personas</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <strong>{{ inscripciones|length }}</strong>
+            <span>Total Inscritos</span>
+        </div>
+        <div class="stat-item">
+            <strong>{{ inscripciones|selectattr('asiste')|list|length }}</strong>
+            <span>Asistieron</span>
+        </div>
+        <div class="stat-item">
+            <strong>{{ inscripciones|length - (inscripciones|selectattr('asiste')|list|length) }}</strong>
+            <span>No Asistieron</span>
+        </div>
+        <div class="stat-item">
+            <strong>{{ actividad.plazas_disponibles() }}</strong>
+            <span>Plazas Libres</span>
+        </div>
+    </div>
+
+    {% if inscripciones %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Fecha de Inscripción</th>
+                    <th>Asistencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inscripcion in inscripciones %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ inscripcion.usuario.nombre }}</strong></td>
+                        <td>{{ inscripcion.usuario.email }}</td>
+                        <td>{{ inscripcion.fecha_inscripcion.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            {% if inscripcion.asiste %}
+                                <span class="badge badge-success">Asistió</span>
+                            {% else %}
+                                <span class="badge badge-secondary">No asistió</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="no-inscritos">
+            <p>No hay inscripciones para esta actividad.</p>
+        </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Asociación de Vecinos - Listado de Inscritos</p>
+    </div>
+</body>
+</html>
+

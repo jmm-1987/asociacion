@@ -123,10 +123,7 @@
                                 </small>
                             </td>
                             <td>
-                                <strong>{{ solicitud.nombre }} {{ solicitud.primer_apellido }}</strong>
-                                {% if solicitud.segundo_apellido %}
-                                    {{ solicitud.segundo_apellido }}
-                                {% endif %}
+                                <strong>{{ solicitud.nombre }} {{ solicitud.primer_apellido }}{% if solicitud.segundo_apellido %} {{ solicitud.segundo_apellido }}{% endif %}</strong>
                             </td>
                             <td>{{ solicitud.movil }}</td>
                             <td>
@@ -154,24 +151,32 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if solicitud.estado == 'por_confirmar' %}
-                                    <form method="POST" action="{{ url_for('admin.confirmar_solicitud', solicitud_id=solicitud.id) }}" style="display: inline;">
-                                        <button type="submit" class="btn btn-success btn-sm" 
-                                                onclick="return confirm('¿Confirmar esta solicitud y crear el usuario?')">
-                                            <i class="bi bi-check-circle me-1"></i>
-                                            Confirmar
-                                        </button>
-                                    </form>
-                                    <form method="POST" action="{{ url_for('admin.rechazar_solicitud', solicitud_id=solicitud.id) }}" style="display: inline;">
-                                        <button type="submit" class="btn btn-danger btn-sm" 
-                                                onclick="return confirm('¿Rechazar esta solicitud?')">
-                                            <i class="bi bi-x-circle me-1"></i>
-                                            Rechazar
-                                        </button>
-                                    </form>
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.ver_solicitud', solicitud_id=solicitud.id) }}" 
+                                       class="btn btn-outline-primary btn-sm" title="Ver Detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if solicitud.estado == 'por_confirmar' %}
+                                        <a href="{{ url_for('admin.editar_solicitud', solicitud_id=solicitud.id) }}" 
+                                           class="btn btn-outline-warning btn-sm" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('admin.confirmar_solicitud', solicitud_id=solicitud.id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-success btn-sm" 
+                                                    onclick="return confirm('¿Confirmar esta solicitud y crear el usuario?')"
+                                                    title="Confirmar">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('admin.rechazar_solicitud', solicitud_id=solicitud.id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-danger btn-sm" 
+                                                    onclick="return confirm('¿Rechazar esta solicitud?')"
+                                                    title="Rechazar">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}

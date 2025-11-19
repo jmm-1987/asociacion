@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Solicitud - Panel Directiva{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-file-text me-2 text-primary"></i>
+        Detalle de Solicitud
+    </h1>
+    <a href="{{ url_for('admin.solicitudes_socios') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Volver a Solicitudes
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Datos del Socio -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-badge me-2"></i>
+                    Datos del Nuevo Socio
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <strong>Nombre:</strong><br>
+                        {{ solicitud.nombre }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>Primer Apellido:</strong><br>
+                        {{ solicitud.primer_apellido }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>Segundo Apellido:</strong><br>
+                        {{ solicitud.segundo_apellido or '-' }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Móvil:</strong><br>
+                        {{ solicitud.movil }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Miembros de la Unidad Familiar:</strong><br>
+                        <span class="badge bg-info">{{ solicitud.miembros_unidad_familiar }}</span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Forma de Pago:</strong><br>
+                        {% if solicitud.forma_de_pago == 'bizum' %}
+                            <span class="badge bg-primary">Bizum</span>
+                        {% elif solicitud.forma_de_pago == 'transferencia' %}
+                            <span class="badge bg-success">Transferencia</span>
+                        {% else %}
+                            <span class="badge bg-warning">Contado</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Estado:</strong><br>
+                        {% if solicitud.estado == 'por_confirmar' %}
+                            <span class="badge bg-warning">Por Confirmar</span>
+                        {% elif solicitud.estado == 'activa' %}
+                            <span class="badge bg-success">Confirmada</span>
+                        {% else %}
+                            <span class="badge bg-danger">Rechazada</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Beneficiarios -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-people-fill me-2"></i>
+                    Beneficiarios ({{ beneficiarios|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if beneficiarios %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nombre</th>
+                                    <th>Primer Apellido</th>
+                                    <th>Segundo Apellido</th>
+                                    <th>Año de Nacimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for beneficiario in beneficiarios %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td><strong>{{ beneficiario.nombre }}</strong></td>
+                                    <td><strong>{{ beneficiario.primer_apellido }}</strong></td>
+                                    <td><strong>{{ beneficiario.segundo_apellido or '-' }}</strong></td>
+                                    <td>{{ beneficiario.ano_nacimiento }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-people text-muted fs-4"></i>
+                        <p class="mt-2 mb-0">No hay beneficiarios registrados para esta solicitud.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Información Adicional -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Información
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Fecha de Solicitud:</strong><br>
+                    {{ solicitud.fecha_solicitud.strftime('%d/%m/%Y a las %H:%M') }}
+                </div>
+                {% if solicitud.fecha_confirmacion %}
+                <div class="mb-3">
+                    <strong>Fecha de Confirmación:</strong><br>
+                    {{ solicitud.fecha_confirmacion.strftime('%d/%m/%Y a las %H:%M') }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        {% if solicitud.estado == 'por_confirmar' %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear me-2"></i>
+                    Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.editar_solicitud', solicitud_id=solicitud.id) }}" 
+                       class="btn btn-warning">
+                        <i class="bi bi-pencil me-2"></i>
+                        Editar Solicitud
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.confirmar_solicitud', solicitud_id=solicitud.id) }}">
+                        <button type="submit" class="btn btn-success w-100" 
+                                onclick="return confirm('¿Confirmar esta solicitud y crear el usuario?')">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Confirmar Solicitud
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.rechazar_solicitud', solicitud_id=solicitud.id) }}">
+                        <button type="submit" class="btn btn-danger w-100" 
+                                onclick="return confirm('¿Rechazar esta solicitud?')">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Rechazar Solicitud
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+

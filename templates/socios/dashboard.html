@@ -92,15 +92,25 @@
                                         </span><br>
                                         {% if actividad.usuario_inscrito(current_user.id) %}
                                             <span class="badge bg-success">Inscrito</span>
-                                        {% elif actividad.tiene_plazas_disponibles() %}
-                                            <form method="POST" action="{{ url_for('socios.inscribir_actividad', actividad_id=actividad.id) }}" style="display: inline;">
-                                                <button type="submit" class="btn btn-primary btn-sm">
-                                                    <i class="bi bi-plus-circle me-1"></i>
-                                                    Inscribirse
-                                                </button>
-                                            </form>
-                                        {% else %}
+                                        {% elif not actividad.tiene_plazas_disponibles() %}
                                             <span class="badge bg-danger">Completo</span>
+                                        {% else %}
+                                            {% set puede_inscribirse = True %}
+                                            {% set mensaje_edad = '' %}
+                                            {% if actividad.tiene_restriccion_edad() %}
+                                                {% set puede_inscribirse, mensaje_edad = actividad.puede_inscribirse_por_edad(current_user.ano_nacimiento) %}
+                                            {% endif %}
+                                            
+                                            {% if puede_inscribirse %}
+                                                <form method="POST" action="{{ url_for('socios.inscribir_actividad', actividad_id=actividad.id) }}" style="display: inline;">
+                                                    <button type="submit" class="btn btn-primary btn-sm">
+                                                        <i class="bi bi-plus-circle me-1"></i>
+                                                        Inscribirse
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <span class="badge bg-warning" title="{{ mensaje_edad }}">No disponible</span>
+                                            {% endif %}
                                         {% endif %}
                                     </div>
                                 </div>
@@ -137,17 +147,61 @@
                 {% if actividades_inscrito %}
                     <div class="list-group list-group-flush">
                         {% for actividad in actividades_inscrito[:5] %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">{{ actividad.nombre }}</h6>
-                                    <small class="text-muted">{{ actividad.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-1">{{ actividad.nombre }}</h6>
+                                        <small class="text-muted">{{ actividad.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    </div>
                                 </div>
-                                <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}" style="display: inline;">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-no-loading="true"
-                                            onclick="return confirm('¿Estás seguro de cancelar tu inscripción?')">
-                                        <i class="bi bi-x-circle"></i>
-                                    </button>
-                                </form>
+                                {% if inscripciones_por_actividad[actividad.id]|length > 1 %}
+                                    <div class="mb-2">
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Inscrito{% if inscripciones_por_actividad[actividad.id]|length > 1 %}s{% endif %}:
+                                            {% for insc in inscripciones_por_actividad[actividad.id] %}
+                                                {% if insc.beneficiario %}
+                                                    {{ insc.beneficiario.nombre }}{% if not loop.last %}, {% endif %}
+                                                {% else %}
+                                                    Tú{% if not loop.last %}, {% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </small>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-danger btn-sm dropdown-toggle" type="button" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="bi bi-x-circle"></i>
+                                            Cancelar
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            {% for insc in inscripciones_por_actividad[actividad.id] %}
+                                                <li>
+                                                    <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}" style="display: inline;">
+                                                        <input type="hidden" name="beneficiario_id" value="{% if insc.beneficiario %}{{ insc.beneficiario.id }}{% else %}socio{% endif %}">
+                                                        <button type="submit" class="dropdown-item" 
+                                                                onclick="return confirm('¿Cancelar esta inscripción?')">
+                                                            {% if insc.beneficiario %}
+                                                                {{ insc.beneficiario.nombre }}
+                                                            {% else %}
+                                                                Tú
+                                                            {% endif %}
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% else %}
+                                    {% set insc = inscripciones_por_actividad[actividad.id][0] %}
+                                    <form method="POST" action="{{ url_for('socios.cancelar_inscripcion', actividad_id=actividad.id) }}" style="display: inline;">
+                                        <input type="hidden" name="beneficiario_id" value="{% if insc.beneficiario %}{{ insc.beneficiario.id }}{% else %}socio{% endif %}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" data-no-loading="true"
+                                                onclick="return confirm('¿Estás seguro de cancelar esta inscripción?')">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     </div>
