@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script para crear datos de prueba para la Asociación de Vecinos
+Script para crear datos de prueba para la Asociación de Vecinos de Montealto
 Ejecutar después de la primera instalación para tener datos de ejemplo
 """
 

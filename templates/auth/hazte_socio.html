@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Hazte Socio - Asociación de Vecinos{% endblock %}
+{% block title %}Hazte Socio - Asociación de Vecinos de Montealto{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -11,7 +11,7 @@
                     <i class="bi bi-person-plus-fill me-2"></i>
                     Solicitud de Inscripción
                 </h2>
-                <p class="text-white-50 mb-0 mt-2">Únete a nuestra asociación de vecinos</p>
+                <p class="text-white-50 mb-0 mt-2">Únete a nuestra asociación de vecinos de Montealto</p>
             </div>
             <div class="card-body p-5">
                 <form method="POST" id="formSolicitud">
@@ -119,6 +119,22 @@
                                         <option value="contado">Contado</option>
                                     </select>
                                     <small class="text-muted">Si seleccionas Bizum, asegurate de que el número de móvil coincida con el de la cuenta que lo efectúa</small>
+                                    
+                                    <!-- Información de pago dinámica -->
+                                    <div id="info-pago" style="display: none;" class="mt-3 p-3 border rounded bg-light">
+                                        <div id="info-bizum" style="display: none;">
+                                            <strong><i class="bi bi-phone me-2"></i>Realiza el Bizum al número:</strong>
+                                            <p class="mb-0 mt-2 fs-5 fw-bold text-primary">612 345 678</p>
+                                        </div>
+                                        <div id="info-transferencia" style="display: none;">
+                                            <strong><i class="bi bi-bank me-2"></i>Realiza la transferencia a la cuenta:</strong>
+                                            <p class="mb-0 mt-2 fs-5 fw-bold text-primary">ES12 3456 7890 1234 5678 9012</p>
+                                        </div>
+                                        <div id="info-contado" style="display: none;">
+                                            <strong><i class="bi bi-cash-coin me-2"></i>Pago en efectivo:</strong>
+                                            <p class="mb-0 mt-2 fs-5 fw-bold text-warning">Pasa por la asociación para completar tu registro</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -179,12 +195,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             campo.addEventListener('input', function(e) {
                 let texto = e.target.value;
+                // Usar un marcador único que no puede aparecer en el texto
+                const MARKER = '\uE000'; // Carácter privado Unicode que no se usa
                 // Preservar la ñ antes de quitar acentos
-                texto = texto.replace(/ñ/g, 'Ñ_TEMP_').replace(/Ñ/g, 'Ñ_TEMP_');
+                texto = texto.replace(/ñ/g, MARKER).replace(/Ñ/g, MARKER);
                 // Quitar acentos
                 texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 // Restaurar la ñ
-                texto = texto.replace(/Ñ_TEMP_/g, 'Ñ');
+                texto = texto.replace(new RegExp(MARKER, 'g'), 'Ñ');
                 // Convertir a mayúsculas
                 texto = texto.toUpperCase();
                 e.target.value = texto;
@@ -322,12 +340,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 campo.addEventListener('input', function(e) {
                     let texto = e.target.value;
+                    // Usar un marcador único que no puede aparecer en el texto
+                    const MARKER = '\uE000'; // Carácter privado Unicode que no se usa
                     // Preservar la ñ antes de quitar acentos
-                    texto = texto.replace(/ñ/g, 'Ñ_TEMP_').replace(/Ñ/g, 'Ñ_TEMP_');
+                    texto = texto.replace(/ñ/g, MARKER).replace(/Ñ/g, MARKER);
                     // Quitar acentos
                     texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                     // Restaurar la ñ
-                    texto = texto.replace(/Ñ_TEMP_/g, 'Ñ');
+                    texto = texto.replace(new RegExp(MARKER, 'g'), 'Ñ');
                     // Convertir a mayúsculas
                     texto = texto.toUpperCase();
                     e.target.value = texto;
@@ -356,6 +376,41 @@ document.addEventListener('DOMContentLoaded', function() {
         if (miembrosInput.value) {
             actualizarBeneficiarios();
         }
+    }
+    
+    // Mostrar/ocultar información de pago según el método seleccionado
+    const formaPagoSelect = document.getElementById('forma_de_pago');
+    const infoPago = document.getElementById('info-pago');
+    const infoBizum = document.getElementById('info-bizum');
+    const infoTransferencia = document.getElementById('info-transferencia');
+    const infoContado = document.getElementById('info-contado');
+    
+    if (formaPagoSelect && infoPago && infoBizum && infoTransferencia && infoContado) {
+        formaPagoSelect.addEventListener('change', function() {
+            const metodo = this.value;
+            
+            if (metodo === 'bizum') {
+                infoPago.style.display = 'block';
+                infoBizum.style.display = 'block';
+                infoTransferencia.style.display = 'none';
+                infoContado.style.display = 'none';
+            } else if (metodo === 'transferencia') {
+                infoPago.style.display = 'block';
+                infoBizum.style.display = 'none';
+                infoTransferencia.style.display = 'block';
+                infoContado.style.display = 'none';
+            } else if (metodo === 'contado') {
+                infoPago.style.display = 'block';
+                infoBizum.style.display = 'none';
+                infoTransferencia.style.display = 'none';
+                infoContado.style.display = 'block';
+            } else {
+                infoPago.style.display = 'none';
+                infoBizum.style.display = 'none';
+                infoTransferencia.style.display = 'none';
+                infoContado.style.display = 'none';
+            }
+        });
     }
 });
 </script>

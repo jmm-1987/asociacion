@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmación de Solicitud - Asociación de Vecinos de Montealto{% endblock %}
+
+{% block content %}
+<style>
+    @media print {
+        .no-print { display: none; }
+    }
+    .compact-section { margin-bottom: 1.5rem; }
+    .compact-card { margin-bottom: 1rem; }
+</style>
+<div class="row justify-content-center">
+    <div class="col-lg-11">
+        <!-- Título llamativo -->
+        <div class="text-center mb-3">
+            <h1 class="display-4 fw-bold text-primary mb-2">
+                <i class="bi bi-camera-fill me-2"></i>
+                ¡GUÁRDATE UN PANTALLAZO!
+            </h1>
+        </div>
+        
+        <!-- Siguientes pasos -->
+        <div class="card shadow-lg border-0 mb-3 compact-card">
+            <div class="card-header bg-success text-white py-3">
+                <h4 class="mb-0">
+                    <i class="bi bi-list-check me-2"></i>
+                    Siguientes Pasos
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info mb-3 py-3">
+                    <h6 class="alert-heading mb-2">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Realiza el pago de tu inscripción
+                    </h6>
+                    <p class="mb-2">
+                        <strong>Método de pago elegido:</strong> 
+                        {% if solicitud.forma_de_pago == 'bizum' %}
+                            <span class="badge bg-primary">Bizum</span>
+                        {% elif solicitud.forma_de_pago == 'transferencia' %}
+                            <span class="badge bg-success">Transferencia</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Contado</span>
+                        {% endif %}
+                    </p>
+                    {% if solicitud.forma_de_pago == 'bizum' %}
+                    <p class="mb-0">
+                        <strong>Realiza el Bizum al número:</strong>
+                        <span class="fs-5 fw-bold text-primary ms-2">{{ numero_bizum }}</span>
+                    </p>
+                    {% elif solicitud.forma_de_pago == 'transferencia' %}
+                    <p class="mb-0">
+                        <strong>Realiza la transferencia a la cuenta:</strong>
+                        <span class="fs-5 fw-bold text-primary ms-2">{{ numero_cuenta }}</span>
+                    </p>
+                    {% elif solicitud.forma_de_pago == 'contado' %}
+                    <p class="mb-0">
+                        <strong><i class="bi bi-cash-coin me-2"></i>Pago en efectivo:</strong>
+                        <span class="fs-5 fw-bold text-warning ms-2">Pasa por la asociación para completar tu registro</span>
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <div class="alert alert-warning mb-3 py-3">
+                    <h6 class="alert-heading mb-2">
+                        <i class="bi bi-clock me-2"></i>
+                        Proceso de verificación
+                    </h6>
+                    <p class="mb-0 small">
+                        Una vez realizado el pago, el equipo de tesorería de la asociación lo comprobará en un plazo máximo de una semana.
+                    </p>
+                </div>
+                
+                <div class="alert alert-success mb-3 py-3">
+                    <h6 class="alert-heading mb-2">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Después de la verificación
+                    </h6>
+                    <p class="mb-0 small">
+                        Si todo es correcto, se te incluirá en el grupo de WhatsApp de la asociación y además tendrás acceso a tu espacio web, desde el que podrás revisar tus datos e inscribirte a las actividades que organicemos.
+                    </p>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <h3 class="text-success fw-bold mb-0">
+                        <i class="bi bi-emoji-smile me-2"></i>
+                        ¡Bienvenidos!!
+                    </h3>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Datos de la solicitud -->
+        <div class="card shadow-lg border-0 mb-3 compact-card">
+            <div class="card-header text-center py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h3 class="mb-0 text-white fw-bold">
+                    <i class="bi bi-file-text-fill me-2"></i>
+                    Datos de tu Solicitud
+                </h3>
+            </div>
+            <div class="card-body p-4">
+                <!-- Datos del socio -->
+                <div class="row mb-3 compact-section">
+                    <div class="col-md-12">
+                        <h5 class="text-primary mb-2">
+                            <i class="bi bi-person-badge me-2"></i>
+                            Datos del Socio
+                        </h5>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Nombre:</strong>
+                        <p class="mb-0">{{ solicitud.nombre|replace('_TEMP', '')|replace('Ñ_TEMP_', 'Ñ') }}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Primer Apellido:</strong>
+                        <p class="mb-0">{{ solicitud.primer_apellido|replace('_TEMP', '')|replace('Ñ_TEMP_', 'Ñ') }}</p>
+                    </div>
+                    {% if solicitud.segundo_apellido %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Segundo Apellido:</strong>
+                        <p class="mb-0">{{ solicitud.segundo_apellido|replace('_TEMP', '')|replace('Ñ_TEMP_', 'Ñ') }}</p>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Móvil:</strong>
+                        <p class="mb-0">{{ solicitud.movil }}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Fecha de Nacimiento:</strong>
+                        <p class="mb-0">{{ solicitud.fecha_nacimiento.strftime('%d/%m/%Y') if solicitud.fecha_nacimiento else 'No especificada' }}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Miembros de la Unidad Familiar:</strong>
+                        <p class="mb-0">{{ solicitud.miembros_unidad_familiar }}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Forma de Pago:</strong>
+                        <p class="mb-0">
+                            {% if solicitud.forma_de_pago == 'bizum' %}
+                                <span class="badge bg-primary">Bizum</span>
+                            {% elif solicitud.forma_de_pago == 'transferencia' %}
+                                <span class="badge bg-success">Transferencia</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Contado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Fecha de Solicitud:</strong>
+                        <p class="mb-0">{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}</p>
+                    </div>
+                </div>
+                
+                <!-- Beneficiarios -->
+                {% if solicitud.beneficiarios %}
+                <div class="row mb-3 compact-section">
+                    <div class="col-md-12">
+                        <h4 class="text-success mb-2">
+                            <i class="bi bi-people-fill me-2"></i>
+                            Beneficiarios
+                        </h4>
+                    </div>
+                    {% for beneficiario in solicitud.beneficiarios %}
+                    <div class="col-md-12 mb-2 p-2 border rounded">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Nombre:</strong>
+                                <p class="mb-0 small">{{ beneficiario.nombre|replace('_TEMP', '')|replace('Ñ_TEMP_', 'Ñ') }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Primer Apellido:</strong>
+                                <p class="mb-0 small">{{ beneficiario.primer_apellido|replace('_TEMP', '')|replace('Ñ_TEMP_', 'Ñ') }}</p>
+                            </div>
+                            {% if beneficiario.segundo_apellido %}
+                            <div class="col-md-3">
+                                <strong>Segundo Apellido:</strong>
+                                <p class="mb-0 small">{{ beneficiario.segundo_apellido|replace('_TEMP', '')|replace('Ñ_TEMP_', 'Ñ') }}</p>
+                            </div>
+                            {% endif %}
+                            <div class="col-md-3">
+                                <strong>Año de Nacimiento:</strong>
+                                <p class="mb-0 small">{{ beneficiario.ano_nacimiento }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Botón para volver -->
+        <div class="text-center mb-3 no-print">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-arrow-left me-2"></i>
+                Volver al inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

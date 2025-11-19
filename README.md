@@ -1,6 +1,6 @@
-# 🏘️ Sistema de Gestión - Asociación de Vecinos
+# 🏘️ Sistema de Gestión - Asociación de Vecinos de Montealto
 
-Una aplicación web completa desarrollada con **Flask** para la gestión de una Asociación de Vecinos, incluyendo autenticación, gestión de socios y actividades.
+Una aplicación web completa desarrollada con **Flask** para la gestión de la Asociación de Vecinos de Montealto, incluyendo autenticación, gestión de socios y actividades.
 
 ## 🚀 Características
 

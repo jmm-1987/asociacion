@@ -1,4 +1,4 @@
-// JavaScript personalizado para la Asociación de Vecinos
+// JavaScript personalizado para la Asociación de Vecinos de Montealto
 
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-ocultar alertas flash después de 5 segundos

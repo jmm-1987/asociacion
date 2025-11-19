@@ -9,14 +9,16 @@ auth_bp = Blueprint('auth', __name__)
 
 def quitar_acentos(texto):
     """Convierte texto a mayúsculas y quita acentos, pero preserva la ñ"""
+    # Usar un marcador único que no puede aparecer en el texto
+    MARKER = '\uE000'  # Carácter privado Unicode que no se usa
     # Preservar la ñ antes de quitar acentos
-    texto = texto.replace('ñ', 'Ñ_TEMP_').replace('Ñ', 'Ñ_TEMP_')
+    texto = texto.replace('ñ', MARKER).replace('Ñ', MARKER)
     # Normalizar a NFD (descomponer caracteres)
     texto = unicodedata.normalize('NFD', texto)
     # Filtrar solo caracteres sin acentos
     texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
     # Restaurar la ñ
-    texto = texto.replace('Ñ_TEMP_', 'Ñ')
+    texto = texto.replace(MARKER, 'Ñ')
     # Convertir a mayúsculas
     return texto.upper()
 
@@ -184,8 +186,22 @@ def hazte_socio():
         
         db.session.commit()
         
-        flash('¡Solicitud enviada correctamente! Te contactaremos pronto para confirmar tu inscripción.', 'success')
-        return redirect(url_for('auth.login'))
+        # Redirigir a la página de confirmación con el ID de la solicitud
+        return redirect(url_for('auth.confirmacion_solicitud', solicitud_id=solicitud.id))
     
     from datetime import datetime as dt
     return render_template('auth/hazte_socio.html', datetime=dt)
+
+@auth_bp.route('/confirmacion-solicitud/<int:solicitud_id>')
+def confirmacion_solicitud(solicitud_id):
+    """Muestra la página de confirmación con todos los datos de la solicitud"""
+    solicitud = SolicitudSocio.query.get_or_404(solicitud_id)
+    
+    # Números de pago (estos deberían estar en configuración, por ahora hardcodeados)
+    NUMERO_BIZUM = "612 345 678"
+    NUMERO_CUENTA = "ES12 3456 7890 1234 5678 9012"
+    
+    return render_template('auth/confirmacion_solicitud.html', 
+                         solicitud=solicitud,
+                         numero_bizum=NUMERO_BIZUM,
+                         numero_cuenta=NUMERO_CUENTA)
