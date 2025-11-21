@@ -22,8 +22,14 @@ def quitar_acentos(texto):
     # Convertir a mayúsculas
     return texto.upper()
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/login')
 def login():
+    """Página principal/portada sin formulario de login"""
+    return render_template('auth/login.html')
+
+@auth_bp.route('/acceso-socios', methods=['GET', 'POST'])
+def acceso_socios():
+    """Página dedicada para el acceso de socios"""
     if current_user.is_authenticated:
         if current_user.rol == 'directiva':
             return redirect(url_for('admin.dashboard'))
@@ -36,7 +42,7 @@ def login():
         
         if not email or not password:
             flash('Por favor, completa todos los campos.', 'error')
-            return render_template('auth/login.html')
+            return render_template('auth/acceso_socios.html')
         
         user = User.query.filter_by(email=email).first()
         
@@ -52,14 +58,14 @@ def login():
         else:
             flash('Nombre de usuario o contraseña incorrectos.', 'error')
     
-    return render_template('auth/login.html')
+    return render_template('auth/acceso_socios.html')
 
 @auth_bp.route('/logout')
 @login_required
 def logout():
     logout_user()
     flash('Has cerrado sesión correctamente.', 'info')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('auth.acceso_socios'))
 
 @auth_bp.route('/hazte-socio', methods=['GET', 'POST'])
 def hazte_socio():
@@ -73,21 +79,24 @@ def hazte_socio():
         password = request.form.get('password', '').strip()
         password_confirm = request.form.get('password_confirm', '').strip()
         
-        fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip()
+        ano_nacimiento = request.form.get('ano_nacimiento', '').strip()
         
         # Validaciones
-        if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, password_confirm, fecha_nacimiento]):
+        if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, password_confirm, ano_nacimiento]):
             flash('Todos los campos obligatorios deben estar completos.', 'error')
             return render_template('auth/hazte_socio.html')
         
-        # Validar fecha de nacimiento
+        # Validar año de nacimiento
         try:
-            fecha_nacimiento_obj = datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
-            if fecha_nacimiento_obj > datetime.now().date():
-                flash('La fecha de nacimiento no puede ser futura.', 'error')
+            ano_nac = int(ano_nacimiento)
+            año_actual = datetime.now().year
+            if ano_nac < 1900 or ano_nac > año_actual:
+                flash('El año de nacimiento debe estar entre 1900 y el año actual.', 'error')
                 return render_template('auth/hazte_socio.html')
+            # Crear fecha de nacimiento usando el 1 de enero del año indicado
+            fecha_nacimiento_obj = datetime(ano_nac, 1, 1).date()
         except ValueError:
-            flash('Fecha de nacimiento inválida.', 'error')
+            flash('Año de nacimiento inválido.', 'error')
             return render_template('auth/hazte_socio.html')
         
         # Validar contraseñas
@@ -100,7 +109,7 @@ def hazte_socio():
             return render_template('auth/hazte_socio.html')
         
         # Validar forma de pago
-        if forma_de_pago not in ['bizum', 'transferencia', 'contado']:
+        if forma_de_pago not in ['bizum', 'transferencia']:
             flash('Forma de pago inválida.', 'error')
             return render_template('auth/hazte_socio.html')
         
@@ -190,7 +199,8 @@ def hazte_socio():
         return redirect(url_for('auth.confirmacion_solicitud', solicitud_id=solicitud.id))
     
     from datetime import datetime as dt
-    return render_template('auth/hazte_socio.html', datetime=dt)
+    año_actual = datetime.now().year
+    return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
 
 @auth_bp.route('/confirmacion-solicitud/<int:solicitud_id>')
 def confirmacion_solicitud(solicitud_id):

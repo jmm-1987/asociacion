@@ -19,33 +19,118 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Hero Section con Portada -->
 <div class="row mb-5">
     <div class="col-12">
-        <div class="position-relative rounded overflow-hidden hero-portada" style="max-height: 300px;">
+        <div class="position-relative rounded overflow-hidden hero-portada" style="max-height: 500px;">
             <img src="{{ url_for('static', filename='portada.jpeg') }}" 
                  alt="Portada Asociación de Vecinos de Montealto" 
                  class="img-fluid w-100" 
-                 style="object-fit: cover; height: 300px;">
-            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center hero-overlay">
-                <div class="text-center text-white px-3">
+                 style="object-fit: cover; height: 500px;">
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center hero-overlay">
+                <div class="text-center text-white px-3 mb-4">
                     <h1 class="display-4 mb-3 fw-bold">
-                        <i class="bi bi-house-door-fill me-2"></i>
+                        
                         Bienvenido a la Asociación de Vecinos de Montealto
                     </h1>
-                    <p class="lead mb-0">
+                    <p class="lead mb-4">
                         Tu espacio para gestionar actividades, eventos y mantenerte conectado con tu comunidad
                     </p>
+                </div>
+                <!-- Botón Hazte Socio -->
+                <div class="text-center">
+                    <a href="{{ url_for('auth.hazte_socio') }}" class="btn-hazte-socio btn btn-lg text-white fw-bold px-5 py-3 rounded-pill shadow-lg">
+                        <i class="bi bi-person-plus-fill me-2 fs-4"></i>
+                        ¡HAZTE SOCIO!
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Botón Hazte Socio -->
+<!-- Sección: Nuestras Fiestas -->
 <div class="row mb-5">
-    <div class="col-12 text-center">
-        <a href="{{ url_for('auth.hazte_socio') }}" class="btn-hazte-socio btn btn-lg text-white fw-bold px-5 py-3 rounded-pill shadow-lg">
-            <i class="bi bi-person-plus-fill me-2 fs-4"></i>
-            ¡HAZTE SOCIO!
+    <div class="col-12">
+        <h2 class="text-center mb-4 fw-bold">
+            <i class="bi bi-camera-fill me-2 text-primary"></i>
+            Nuestras Fiestas
+        </h2>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="#" class="galeria-link text-decoration-none">
+            <div class="galeria-card galeria-card-1">
+                <div class="galeria-imagen">
+                    <img src="{{ url_for('static', filename='navidad.png') }}" 
+                         alt="El Barrio de la Navidad" 
+                         class="img-fluid">
+                </div>
+                <div class="galeria-overlay">
+                    <h4 class="text-white fw-bold mb-0">
+                        <i class="bi bi-snow me-2"></i>
+                        El Barrio de la Navidad
+                    </h4>
+                </div>
+            </div>
         </a>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="#" class="galeria-link text-decoration-none">
+            <div class="galeria-card galeria-card-2">
+                <div class="galeria-imagen">
+                    <img src="{{ url_for('static', filename='fiestas.png') }}" 
+                         alt="Ferias y Fiestas" 
+                         class="img-fluid">
+                </div>
+                <div class="galeria-overlay">
+                    <h4 class="text-white fw-bold mb-0">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Ferias y Fiestas
+                    </h4>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="#" class="galeria-link text-decoration-none">
+            <div class="galeria-card galeria-card-3">
+                <div class="galeria-imagen">
+                    <img src="{{ url_for('static', filename='hallowen.png') }}" 
+                         alt="Halloween" 
+                         class="img-fluid">
+                </div>
+                <div class="galeria-overlay">
+                    <h4 class="text-white fw-bold mb-0">
+                        <i class="bi bi-ghost me-2"></i>
+                        Halloween
+                    </h4>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Directorio de Empresas -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="directorio-empresas-card">
+            <div class="directorio-content">
+                <div class="directorio-icon">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="directorio-text">
+                    <h3 class="mb-2 fw-bold">
+                        ¿Necesitas algún servicio?
+                    </h3>
+                    <p class="mb-0 lead">
+                        Consulta el <strong>directorio de empresas del barrio</strong>!
+                    </p>
+                </div>
+                <div class="directorio-button">
+                    <a href="#" class="btn btn-light btn-lg rounded-pill px-4">
+                        <i class="bi bi-search me-2"></i>
+                        Ver Directorio
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -118,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Contenido Principal -->
 <div class="row">
     <!-- Información sobre la Asociación -->
-    <div class="col-lg-7 mb-4">
+    <div class="col-lg-12 mb-4">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-primary text-white">
                 <h4 class="mb-0">
@@ -178,77 +263,5 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
     
-    <!-- Formulario de Login -->
-    <div class="col-lg-5" id="login-form">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0">
-                    <i class="bi bi-person-circle me-2"></i>
-                    Acceso a Socios
-                </h4>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Nombre de Usuario</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-person"></i>
-                            </span>
-                            <input type="text" class="form-control" id="email" name="email" required>
-                        </div>
-                        <small class="text-muted">Formato: nombrenumero (ej: juan0001)</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-lock"></i>
-                            </span>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>
-                            Iniciar Sesión
-                        </button>
-                    </div>
-                </form>
-            </div>
-            <div class="card-footer text-center text-muted">
-                <small>
-                    <i class="bi bi-shield-check me-1"></i>
-                    Sistema seguro de gestión de la Asociación de Vecinos de Montealto
-                </small>
-            </div>
-        </div>
-        
-        <!-- Información de usuarios de prueba -->
-        <div class="card mt-4 shadow-sm">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Usuarios de Prueba
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-12 mb-3">
-                        <h6 class="text-primary">Directiva:</h6>
-                        <p class="small mb-1"><strong>Email:</strong> admin@asociacion.com</p>
-                        <p class="small mb-0"><strong>Contraseña:</strong> admin123</p>
-                    </div>
-                    <div class="col-12">
-                        <h6 class="text-primary">Socio:</h6>
-                        <p class="small mb-1"><strong>Email:</strong> juan@email.com</p>
-                        <p class="small mb-0"><strong>Contraseña:</strong> socio123</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}

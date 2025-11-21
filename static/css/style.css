@@ -56,9 +56,9 @@ body::before {
     }
 }
 
-/* Navbar personalizada con gradiente */
+/* Navbar personalizada con fondo negro */
 .navbar {
-    background: var(--gradient-primary) !important;
+    background: #000000 !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
@@ -432,11 +432,11 @@ footer p {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(2px);
+    backdrop-filter: none;
 }
 
 .hero-overlay h1 {
@@ -474,11 +474,11 @@ footer p {
 /* Responsive para portada */
 @media (max-width: 768px) {
     .hero-portada {
-        max-height: 200px;
+        max-height: 400px;
     }
     
     .hero-portada img {
-        height: 200px;
+        height: 400px;
     }
     
     .hero-overlay h1 {
@@ -649,6 +649,222 @@ footer p {
     .btn-hazte-socio {
         font-size: 1.2rem;
         padding: 0.75rem 2rem !important;
+    }
+}
+
+/* Galerías de Fiestas con marcos irregulares */
+.galeria-link {
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.galeria-link:hover {
+    transform: translateY(-10px);
+}
+
+.galeria-card {
+    position: relative;
+    overflow: hidden;
+    height: 300px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.galeria-card:hover {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
+}
+
+/* Marco irregular 1 - El Barrio de la Navidad */
+.galeria-card-1 {
+    clip-path: polygon(0 10%, 10% 0, 90% 0, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0 90%);
+    border-radius: 20px 50px 20px 50px;
+}
+
+/* Marco irregular 2 - Ferias y Fiestas */
+.galeria-card-2 {
+    clip-path: polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%);
+    border-radius: 50px 20px 50px 20px;
+}
+
+/* Marco irregular 3 - Halloween */
+.galeria-card-3 {
+    clip-path: polygon(0 5%, 5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%);
+    border-radius: 30px 30px 60px 30px;
+}
+
+.galeria-imagen {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.galeria-imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.galeria-card:hover .galeria-imagen img {
+    transform: scale(1.15);
+}
+
+.galeria-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+    padding: 2rem 1.5rem 1.5rem;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+}
+
+.galeria-card:hover .galeria-overlay {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 50%, transparent 100%);
+    padding-bottom: 2rem;
+}
+
+/* Responsive para galerías */
+@media (max-width: 768px) {
+    .galeria-card {
+        height: 250px;
+        margin-bottom: 2rem;
+    }
+    
+    .galeria-overlay {
+        padding: 1.5rem 1rem 1rem;
+    }
+    
+    .galeria-overlay h4 {
+        font-size: 1.2rem;
+    }
+}
+
+/* Directorio de Empresas - Card redondeado destacado */
+.directorio-empresas-card {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    border-radius: 50px;
+    padding: 2.5rem;
+    box-shadow: 0 15px 40px rgba(51, 65, 85, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.directorio-empresas-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+}
+
+.directorio-empresas-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(51, 65, 85, 0.4);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+.directorio-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.directorio-icon {
+    font-size: 4rem;
+    color: white;
+    opacity: 0.9;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.directorio-text {
+    flex: 1;
+    color: white;
+}
+
+.directorio-text h3 {
+    color: white;
+    font-size: 2rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.directorio-text p {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.3rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.directorio-button .btn {
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.directorio-button .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive para directorio */
+@media (max-width: 768px) {
+    .directorio-empresas-card {
+        border-radius: 30px;
+        padding: 2rem 1.5rem;
+    }
+    
+    .directorio-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .directorio-icon {
+        font-size: 3rem;
+    }
+    
+    .directorio-text h3 {
+        font-size: 1.5rem;
+    }
+    
+    .directorio-text p {
+        font-size: 1.1rem;
+    }
+    
+    .directorio-button {
+        width: 100%;
+    }
+    
+    .directorio-button .btn {
+        width: 100%;
     }
 }
 

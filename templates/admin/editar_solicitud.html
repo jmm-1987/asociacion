@@ -97,6 +97,10 @@
             </h5>
         </div>
         <div class="card-body" id="beneficiarios-body">
+            <div class="alert alert-info mb-4" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Importante:</strong> Los beneficiarios son los miembros de la unidad familiar que van a disfrutar de los beneficios del socio.
+            </div>
             {% for beneficiario in beneficiarios %}
             <div class="beneficiario-item mb-4 p-3 border rounded" data-index="{{ loop.index }}">
                 <h6 class="mb-3 text-success">
@@ -286,7 +290,10 @@ document.addEventListener('DOMContentLoaded', function() {
             container.style.display = 'block';
             // Solo actualizar si no hay beneficiarios existentes
             if (body.querySelectorAll('.beneficiario-item').length === 0) {
-                body.innerHTML = '';
+                // Preservar el texto explicativo si existe
+                const textoExplicativo = body.querySelector('.alert-info');
+                const textoHTML = textoExplicativo ? textoExplicativo.outerHTML : '';
+                body.innerHTML = textoHTML;
                 for (let i = 1; i <= beneficiarios; i++) {
                     body.innerHTML += generarCamposBeneficiario(i);
                 }
