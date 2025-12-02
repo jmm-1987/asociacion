@@ -4,35 +4,158 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="mb-0">
-                    <i class="bi bi-person-plus me-2"></i>
+    <div class="col-lg-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #ff9999 0%, #ffb366 16.66%, #ffeb99 33.33%, #99ff99 50%, #9999ff 66.66%, #b399e6 83.33%, #d4b3f0 100%);">
+                <h2 class="mb-0 text-white fw-bold">
+                    <i class="bi bi-person-plus-fill me-2"></i>
                     Registrar Nuevo Socio
-                </h4>
+                </h2>
+                <p class="text-white-50 mb-0 mt-2">Registro directo desde el panel de administración</p>
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="nombre" class="form-label">Nombre Completo *</label>
-                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+            <div class="card-body p-5">
+                <form method="POST" id="formSolicitud">
+                    <!-- Sección: Datos del nuevo socio -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-badge me-2"></i>
+                                Datos del nuevo socio
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="nombre" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" 
+                                           required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="primer_apellido" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" 
+                                           required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="segundo_apellido" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Segundo Apellido
+                                    </label>
+                                    <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
+                                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="movil" class="form-label fw-bold">
+                                        <i class="bi bi-phone me-1"></i>Móvil <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="tel" class="form-control" id="movil" name="movil" 
+                                           required pattern="[0-9]{9}" maxlength="9" 
+                                           title="9 dígitos numéricos" placeholder="123456789">
+                                    <small class="text-muted">9 dígitos sin espacios ni guiones</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="miembros_unidad_familiar" class="form-label fw-bold">
+                                        <i class="bi bi-people me-1"></i>Miembros de la Unidad Familiar <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="miembros_unidad_familiar" 
+                                           name="miembros_unidad_familiar" required min="1" 
+                                           title="Número positivo">
+                                    <small class="text-muted">Incluyéndote a ti</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label fw-bold">
+                                        <i class="bi bi-envelope me-1"></i>Email <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <small class="text-muted">Será el nombre de usuario para acceder</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="password" class="form-label fw-bold">
+                                        <i class="bi bi-lock me-1"></i>Contraseña <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           required minlength="6" 
+                                           title="Mínimo 6 caracteres">
+                                    <small class="text-muted">Mínimo 6 caracteres</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="ano_nacimiento" class="form-label fw-bold">
+                                        <i class="bi bi-calendar me-1"></i>Año de Nacimiento <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="ano_nacimiento" name="ano_nacimiento" 
+                                           required min="1900" max="{{ datetime.now().year }}" title="Año válido">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="forma_de_pago" class="form-label fw-bold">
+                                        <i class="bi bi-credit-card me-1"></i>Forma de Pago <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="forma_de_pago" name="forma_de_pago" required>
+                                        <option value="">Selecciona una opción</option>
+                                        <option value="bizum">Bizum</option>
+                                        <option value="transferencia">Transferencia</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Sección: Dirección -->
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="bi bi-geo-alt me-2"></i>Dirección
+                                    </h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="calle" class="form-label fw-bold">
+                                        <i class="bi bi-signpost me-1"></i>Calle <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="calle" name="calle" 
+                                           required placeholder="Nombre de la calle">
+                                </div>
+                                
+                                <div class="col-md-3 mb-3">
+                                    <label for="numero" class="form-label fw-bold">
+                                        <i class="bi bi-123 me-1"></i>Número <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="numero" name="numero" 
+                                           required placeholder="Número">
+                                </div>
+                                
+                                <div class="col-md-3 mb-3">
+                                    <label for="piso" class="form-label fw-bold">
+                                        <i class="bi bi-building me-1"></i>Piso
+                                    </label>
+                                    <input type="text" class="form-control" id="piso" name="piso" 
+                                           placeholder="Ej: 2º B (opcional)">
+                                </div>
+                                
+                                <div class="col-md-12 mb-3">
+                                    <label for="poblacion" class="form-label fw-bold">
+                                        <i class="bi bi-geo-alt-fill me-1"></i>Población <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="poblacion" name="poblacion" 
+                                           required placeholder="Nombre de la población">
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email *</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña Temporal *</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                        <div class="form-text">El socio podrá cambiar esta contraseña después.</div>
                     </div>
                     
                     <div class="alert alert-info">
@@ -40,23 +163,15 @@
                         <strong>Fecha de Validez:</strong> La suscripción será válida hasta el <strong>31/12/{{ datetime.now().year }}</strong> (fin del año en curso).
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="ano_nacimiento" class="form-label">Año de Nacimiento</label>
-                        <input type="number" class="form-control" id="ano_nacimiento" name="ano_nacimiento" 
-                               min="1900" max="{{ datetime.now().year }}" 
-                               placeholder="Opcional - Para validar edad en actividades">
-                        <div class="form-text">Opcional. Necesario si el socio quiere inscribirse en actividades con restricción de edad.</div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('admin.gestion_socios') }}" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left me-2"></i>
-                            Volver
-                        </a>
-                        <button type="submit" class="btn btn-primary">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
                             <i class="bi bi-check-lg me-2"></i>
                             Registrar Socio
                         </button>
+                        <a href="{{ url_for('admin.gestion_socios') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Volver
+                        </a>
                     </div>
                 </form>
             </div>
@@ -65,3 +180,35 @@
 </div>
 {% endblock %}
 
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para convertir a mayúsculas preservando ñ
+    function convertirAMayusculas(campo) {
+        if (campo && campo.value) {
+            // Preservar ñ antes de convertir
+            let texto = campo.value;
+            texto = texto.replace(/ñ/g, '\uE000').replace(/Ñ/g, '\uE000');
+            texto = texto.toUpperCase();
+            texto = texto.replace(/\uE000/g, 'Ñ');
+            campo.value = texto;
+        }
+    }
+    
+    // Aplicar a campos de texto
+    const camposTexto = ['nombre', 'primer_apellido', 'segundo_apellido', 'calle', 'poblacion'];
+    camposTexto.forEach(function(campoId) {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.addEventListener('input', function(e) {
+                convertirAMayusculas(e.target);
+            });
+            campo.addEventListener('blur', function(e) {
+                e.target.value = e.target.value.trim();
+                convertirAMayusculas(e.target);
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Importar Datos - Panel Directiva{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-upload me-2 text-primary"></i>
+        Importar Datos
+    </h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Volver al Dashboard
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-lg">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Importar Datos de Backup
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <strong>¡ADVERTENCIA!</strong> Esta operación puede sobrescribir datos existentes. 
+                    Se recomienda hacer una exportación antes de importar.
+                </div>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="archivo" class="form-label fw-bold">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            Seleccionar archivo de backup (.txt)
+                        </label>
+                        <input type="file" class="form-control" id="archivo" name="archivo" 
+                               accept=".txt,.json" required>
+                        <small class="text-muted">Selecciona el archivo exportado previamente</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="limpiar_bd" name="limpiar_bd">
+                            <label class="form-check-label" for="limpiar_bd">
+                                <strong>Limpiar base de datos antes de importar</strong>
+                            </label>
+                            <small class="text-muted d-block">
+                                Si está marcado, se eliminarán todos los datos existentes antes de importar. 
+                                Si no está marcado, solo se añadirán los datos nuevos (se saltarán duplicados).
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" 
+                                onclick="return confirm('¿Estás seguro de que quieres importar estos datos?')">
+                            <i class="bi bi-upload me-2"></i>
+                            Importar Datos
+                        </button>
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Información
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Formato del archivo:</strong> JSON (guardado como .txt)</p>
+                <p><strong>Datos que se importan:</strong></p>
+                <ul>
+                    <li>Usuarios (socios y directiva)</li>
+                    <li>Actividades</li>
+                    <li>Inscripciones</li>
+                    <li>Beneficiarios</li>
+                    <li>Solicitudes de socio</li>
+                    <li>Beneficiarios de solicitudes</li>
+                </ul>
+                <p class="mb-0"><strong>Nota:</strong> Las contraseñas se importan tal como estaban en el backup.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

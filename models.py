@@ -20,6 +20,10 @@ class User(UserMixin, db.Model):
     ano_nacimiento = db.Column(db.Integer, nullable=True)  # Año de nacimiento para verificar edad en actividades
     fecha_nacimiento = db.Column(db.Date, nullable=True)  # Fecha completa de nacimiento
     numero_socio = db.Column(db.String(10), unique=True, nullable=True)  # Número de socio (0001, 0002, etc.)
+    calle = db.Column(db.String(200), nullable=True)
+    numero = db.Column(db.String(20), nullable=True)
+    piso = db.Column(db.String(20), nullable=True)  # Opcional
+    poblacion = db.Column(db.String(100), nullable=True)
     
     # Relaciones
     inscripciones = db.relationship('Inscripcion', backref='usuario', lazy=True, cascade='all, delete-orphan')
@@ -156,6 +160,10 @@ class SolicitudSocio(db.Model):
     fecha_solicitud = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     fecha_confirmacion = db.Column(db.DateTime, nullable=True)
     password_solicitud = db.Column(db.String(255), nullable=True)  # Contraseña temporal hasta confirmación
+    calle = db.Column(db.String(200), nullable=False)
+    numero = db.Column(db.String(20), nullable=False)
+    piso = db.Column(db.String(20), nullable=True)  # Opcional
+    poblacion = db.Column(db.String(100), nullable=False)
     
     # Relaciones
     beneficiarios = db.relationship('BeneficiarioSolicitud', backref='solicitud', lazy=True, cascade='all, delete-orphan')

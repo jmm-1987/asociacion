@@ -80,9 +80,13 @@ def hazte_socio():
         password_confirm = request.form.get('password_confirm', '').strip()
         
         ano_nacimiento = request.form.get('ano_nacimiento', '').strip()
+        calle = request.form.get('calle', '').strip()
+        numero = request.form.get('numero', '').strip()
+        piso = request.form.get('piso', '').strip()
+        poblacion = request.form.get('poblacion', '').strip()
         
         # Validaciones
-        if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, password_confirm, ano_nacimiento]):
+        if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, password_confirm, ano_nacimiento, calle, numero, poblacion]):
             flash('Todos los campos obligatorios deben estar completos.', 'error')
             return render_template('auth/hazte_socio.html')
         
@@ -133,6 +137,12 @@ def hazte_socio():
             flash('El número de móvil debe tener 9 dígitos.', 'error')
             return render_template('auth/hazte_socio.html')
         
+        # Convertir dirección a mayúsculas
+        calle = quitar_acentos(calle.upper())
+        poblacion = quitar_acentos(poblacion.upper())
+        numero = numero.strip()
+        piso = piso.strip() if piso else None
+        
         # Crear solicitud (guardar contraseña en texto plano para mostrar a admin)
         solicitud = SolicitudSocio(
             nombre=nombre,
@@ -143,7 +153,11 @@ def hazte_socio():
             miembros_unidad_familiar=miembros,
             forma_de_pago=forma_de_pago,
             estado='por_confirmar',
-            password_solicitud=password  # Guardar contraseña temporalmente
+            password_solicitud=password,  # Guardar contraseña temporalmente
+            calle=calle,
+            numero=numero,
+            piso=piso,
+            poblacion=poblacion
         )
         
         db.session.add(solicitud)
@@ -193,7 +207,12 @@ def hazte_socio():
                 )
                 db.session.add(beneficiario)
         
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash('Error al guardar la solicitud. Por favor, inténtalo de nuevo.', 'error')
+            return render_template('auth/hazte_socio.html')
         
         # Redirigir a la página de confirmación con el ID de la solicitud
         return redirect(url_for('auth.confirmacion_solicitud', solicitud_id=solicitud.id))

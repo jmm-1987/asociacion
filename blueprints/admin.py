@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, send_file
 from flask_login import login_required, current_user
 from models import User, Actividad, Inscripcion, SolicitudSocio, BeneficiarioSolicitud, Beneficiario, db
 from datetime import datetime, timedelta
@@ -6,13 +6,25 @@ from functools import wraps
 import secrets
 import string
 import re
-from io import BytesIO
+import unicodedata
+import json
+import os
+from io import BytesIO, StringIO
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
+
+def quitar_acentos(texto):
+    """Convierte texto a mayúsculas y quita acentos, pero preserva la ñ"""
+    MARKER = '\uE000'  # Carácter privado Unicode que no se usa
+    texto = texto.replace('ñ', MARKER).replace('Ñ', MARKER)
+    texto = unicodedata.normalize('NFD', texto)
+    texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
+    texto = texto.replace(MARKER, 'Ñ')
+    return texto.upper()
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -84,33 +96,84 @@ def gestion_socios():
 @directiva_required
 def nuevo_socio():
     if request.method == 'POST':
-        nombre = request.form.get('nombre')
-        email = request.form.get('email')
-        password = request.form.get('password')
+        nombre = request.form.get('nombre', '').strip()
+        primer_apellido = request.form.get('primer_apellido', '').strip()
+        segundo_apellido = request.form.get('segundo_apellido', '').strip()
+        movil = request.form.get('movil', '').strip()
+        miembros_unidad_familiar = request.form.get('miembros_unidad_familiar', '').strip()
+        forma_de_pago = request.form.get('forma_de_pago', '').strip()
+        password = request.form.get('password', '').strip()
         ano_nacimiento = request.form.get('ano_nacimiento', '').strip()
+        email = request.form.get('email', '').strip()
+        
+        # Dirección
+        calle = request.form.get('calle', '').strip()
+        numero = request.form.get('numero', '').strip()
+        piso = request.form.get('piso', '').strip()
+        poblacion = request.form.get('poblacion', '').strip()
         
         # Validaciones
-        if not all([nombre, email, password]):
+        if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, ano_nacimiento, email, calle, numero, poblacion]):
             flash('Todos los campos obligatorios deben estar completos.', 'error')
-            return render_template('admin/nuevo_socio.html')
+            from datetime import datetime as dt
+            return render_template('admin/nuevo_socio.html', datetime=dt)
         
         # Verificar si el email ya existe
         if User.query.filter_by(email=email).first():
             flash('Ya existe un usuario con este email.', 'error')
-            return render_template('admin/nuevo_socio.html')
+            from datetime import datetime as dt
+            return render_template('admin/nuevo_socio.html', datetime=dt)
         
+        # Validar móvil
+        if not re.match(r'^\d{9}$', movil):
+            flash('El número de móvil debe tener 9 dígitos.', 'error')
+            from datetime import datetime as dt
+            return render_template('admin/nuevo_socio.html', datetime=dt)
+        
+        # Validar año de nacimiento
         try:
-            # Validar año de nacimiento si se proporciona
-            ano_nac = None
-            if ano_nacimiento:
-                ano_nac = int(ano_nacimiento)
-                año_actual = datetime.now().year
-                if ano_nac < 1900 or ano_nac > año_actual:
-                    flash('El año de nacimiento debe estar entre 1900 y el año actual.', 'error')
-                    return render_template('admin/nuevo_socio.html')
+            ano_nac = int(ano_nacimiento)
+            año_actual = datetime.now().year
+            if ano_nac < 1900 or ano_nac > año_actual:
+                flash('El año de nacimiento debe estar entre 1900 y el año actual.', 'error')
+                from datetime import datetime as dt
+                return render_template('admin/nuevo_socio.html', datetime=dt)
+            fecha_nacimiento_obj = datetime(ano_nac, 1, 1).date()
         except ValueError:
             flash('Año de nacimiento inválido.', 'error')
-            return render_template('admin/nuevo_socio.html')
+            from datetime import datetime as dt
+            return render_template('admin/nuevo_socio.html', datetime=dt)
+        
+        # Validar miembros
+        try:
+            miembros = int(miembros_unidad_familiar)
+            if miembros <= 0:
+                raise ValueError()
+        except ValueError:
+            flash('El número de miembros de la unidad familiar debe ser un número positivo.', 'error')
+            from datetime import datetime as dt
+            return render_template('admin/nuevo_socio.html', datetime=dt)
+        
+        # Validar forma de pago
+        if forma_de_pago not in ['bizum', 'transferencia']:
+            flash('Forma de pago inválida.', 'error')
+            from datetime import datetime as dt
+            return render_template('admin/nuevo_socio.html', datetime=dt)
+        
+        # Convertir a mayúsculas y quitar acentos
+        nombre = quitar_acentos(nombre)
+        primer_apellido = quitar_acentos(primer_apellido)
+        if segundo_apellido:
+            segundo_apellido = quitar_acentos(segundo_apellido)
+        calle = quitar_acentos(calle.upper())
+        poblacion = quitar_acentos(poblacion.upper())
+        numero = numero.strip()
+        piso = piso.strip() if piso else None
+        
+        # Generar nombre completo
+        nombre_completo = f"{nombre} {primer_apellido}"
+        if segundo_apellido:
+            nombre_completo += f" {segundo_apellido}"
         
         # Fecha de validez siempre al 31/12 del año en curso
         año_actual = datetime.now().year
@@ -118,20 +181,30 @@ def nuevo_socio():
         
         # Crear nuevo socio
         nuevo_socio = User(
-            nombre=nombre,
+            nombre=nombre_completo,
             email=email,
             rol='socio',
             fecha_alta=datetime.utcnow(),
             fecha_validez=fecha_validez,
-            ano_nacimiento=ano_nac
+            ano_nacimiento=ano_nac,
+            fecha_nacimiento=fecha_nacimiento_obj,
+            calle=calle,
+            numero=numero,
+            piso=piso,
+            poblacion=poblacion
         )
         nuevo_socio.set_password(password)
         
-        db.session.add(nuevo_socio)
-        db.session.commit()
-        
-        flash(f'Socio {nombre} registrado exitosamente con validez hasta el 31/12/{año_actual}.', 'success')
-        return redirect(url_for('admin.gestion_socios'))
+        try:
+            db.session.add(nuevo_socio)
+            db.session.commit()
+            flash(f'Socio {nombre_completo} registrado exitosamente con validez hasta el 31/12/{año_actual}.', 'success')
+            return redirect(url_for('admin.gestion_socios'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al registrar el socio: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+            from datetime import datetime as dt
+            return render_template('admin/nuevo_socio.html', datetime=dt)
     
     from datetime import datetime as dt
     return render_template('admin/nuevo_socio.html', datetime=dt)
@@ -650,9 +723,14 @@ def editar_solicitud(solicitud_id):
                         db.session.rollback()
                         return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios)
         
-        db.session.commit()
-        flash('Solicitud actualizada correctamente.', 'success')
-        return redirect(url_for('admin.ver_solicitud', solicitud_id=solicitud_id))
+        try:
+            db.session.commit()
+            flash('Solicitud actualizada correctamente.', 'success')
+            return redirect(url_for('admin.ver_solicitud', solicitud_id=solicitud_id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error al actualizar la solicitud. Por favor, inténtalo de nuevo.', 'error')
+            return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
     
     from datetime import datetime as dt
     return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
@@ -723,7 +801,11 @@ def confirmar_solicitud(solicitud_id):
         numero_socio=numero_socio,
         fecha_nacimiento=solicitud.fecha_nacimiento,
         ano_nacimiento=ano_nacimiento,
-        password_plain=password  # Guardar contraseña en texto plano para mostrar a admin
+        password_plain=password,  # Guardar contraseña en texto plano para mostrar a admin
+        calle=solicitud.calle,
+        numero=solicitud.numero,
+        piso=solicitud.piso,
+        poblacion=solicitud.poblacion
     )
     nuevo_socio.set_password(password)
     
@@ -749,15 +831,19 @@ def confirmar_solicitud(solicitud_id):
         )
         db.session.add(beneficiario)
     
-    db.session.commit()
-    
-    beneficiarios_count = len(beneficiarios_solicitud)
-    mensaje = f'Solicitud confirmada. Usuario creado: {nombre_usuario} (Número de socio: {numero_socio}) con contraseña: {password}'
-    if beneficiarios_count > 0:
-        mensaje += f'. Se crearon {beneficiarios_count} beneficiario(s).'
-    
-    flash(mensaje, 'success')
-    return redirect(url_for('admin.solicitudes_socios'))
+    try:
+        db.session.commit()
+        beneficiarios_count = len(beneficiarios_solicitud)
+        mensaje = f'Solicitud confirmada. Usuario creado: {nombre_usuario} (Número de socio: {numero_socio}) con contraseña: {password}'
+        if beneficiarios_count > 0:
+            mensaje += f'. Se crearon {beneficiarios_count} beneficiario(s).'
+        
+        flash(mensaje, 'success')
+        return redirect(url_for('admin.solicitudes_socios'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al confirmar la solicitud: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+        return redirect(url_for('admin.ver_solicitud', solicitud_id=solicitud_id))
 
 @admin_bp.route('/solicitudes-socios/<int:solicitud_id>/rechazar', methods=['POST'])
 @login_required
@@ -771,7 +857,340 @@ def rechazar_solicitud(solicitud_id):
         return redirect(url_for('admin.solicitudes_socios'))
     
     solicitud.estado = 'rechazada'
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al rechazar la solicitud: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+        return redirect(url_for('admin.ver_solicitud', solicitud_id=solicitud_id))
     
     flash('Solicitud rechazada.', 'info')
     return redirect(url_for('admin.solicitudes_socios'))
+
+@admin_bp.route('/exportar-datos', methods=['GET'])
+@login_required
+@directiva_required
+def exportar_datos():
+    """Exporta todos los datos de la base de datos a un archivo JSON"""
+    try:
+        # Recopilar todos los datos
+        datos = {
+            'fecha_exportacion': datetime.utcnow().isoformat(),
+            'version': '1.0',
+            'usuarios': [],
+            'actividades': [],
+            'inscripciones': [],
+            'beneficiarios': [],
+            'solicitudes_socio': [],
+            'beneficiarios_solicitud': []
+        }
+        
+        # Exportar usuarios
+        usuarios = User.query.all()
+        for usuario in usuarios:
+            datos['usuarios'].append({
+                'id': usuario.id,
+                'nombre': usuario.nombre,
+                'email': usuario.email,
+                'password_hash': usuario.password_hash,
+                'password_plain': usuario.password_plain,
+                'rol': usuario.rol,
+                'fecha_alta': usuario.fecha_alta.isoformat() if usuario.fecha_alta else None,
+                'fecha_validez': usuario.fecha_validez.isoformat() if usuario.fecha_validez else None,
+                'ano_nacimiento': usuario.ano_nacimiento,
+                'fecha_nacimiento': usuario.fecha_nacimiento.isoformat() if usuario.fecha_nacimiento else None,
+                'numero_socio': usuario.numero_socio,
+                'calle': usuario.calle,
+                'numero': usuario.numero,
+                'piso': usuario.piso,
+                'poblacion': usuario.poblacion
+            })
+        
+        # Exportar actividades
+        actividades = Actividad.query.all()
+        for actividad in actividades:
+            datos['actividades'].append({
+                'id': actividad.id,
+                'nombre': actividad.nombre,
+                'descripcion': actividad.descripcion,
+                'fecha': actividad.fecha.isoformat() if actividad.fecha else None,
+                'aforo_maximo': actividad.aforo_maximo,
+                'edad_minima': actividad.edad_minima,
+                'edad_maxima': actividad.edad_maxima,
+                'fecha_creacion': actividad.fecha_creacion.isoformat() if actividad.fecha_creacion else None
+            })
+        
+        # Exportar inscripciones
+        inscripciones = Inscripcion.query.all()
+        for inscripcion in inscripciones:
+            datos['inscripciones'].append({
+                'id': inscripcion.id,
+                'user_id': inscripcion.user_id,
+                'actividad_id': inscripcion.actividad_id,
+                'beneficiario_id': inscripcion.beneficiario_id,
+                'fecha_inscripcion': inscripcion.fecha_inscripcion.isoformat() if inscripcion.fecha_inscripcion else None,
+                'asiste': inscripcion.asiste
+            })
+        
+        # Exportar beneficiarios
+        beneficiarios = Beneficiario.query.all()
+        for beneficiario in beneficiarios:
+            datos['beneficiarios'].append({
+                'id': beneficiario.id,
+                'socio_id': beneficiario.socio_id,
+                'nombre': beneficiario.nombre,
+                'primer_apellido': beneficiario.primer_apellido,
+                'segundo_apellido': beneficiario.segundo_apellido,
+                'ano_nacimiento': beneficiario.ano_nacimiento,
+                'fecha_validez': beneficiario.fecha_validez.isoformat() if beneficiario.fecha_validez else None,
+                'numero_beneficiario': beneficiario.numero_beneficiario
+            })
+        
+        # Exportar solicitudes
+        solicitudes = SolicitudSocio.query.all()
+        for solicitud in solicitudes:
+            datos['solicitudes_socio'].append({
+                'id': solicitud.id,
+                'nombre': solicitud.nombre,
+                'primer_apellido': solicitud.primer_apellido,
+                'segundo_apellido': solicitud.segundo_apellido,
+                'movil': solicitud.movil,
+                'fecha_nacimiento': solicitud.fecha_nacimiento.isoformat() if solicitud.fecha_nacimiento else None,
+                'miembros_unidad_familiar': solicitud.miembros_unidad_familiar,
+                'forma_de_pago': solicitud.forma_de_pago,
+                'estado': solicitud.estado,
+                'fecha_solicitud': solicitud.fecha_solicitud.isoformat() if solicitud.fecha_solicitud else None,
+                'fecha_confirmacion': solicitud.fecha_confirmacion.isoformat() if solicitud.fecha_confirmacion else None,
+                'password_solicitud': solicitud.password_solicitud,
+                'calle': solicitud.calle,
+                'numero': solicitud.numero,
+                'piso': solicitud.piso,
+                'poblacion': solicitud.poblacion
+            })
+        
+        # Exportar beneficiarios de solicitudes
+        beneficiarios_solicitud = BeneficiarioSolicitud.query.all()
+        for ben_sol in beneficiarios_solicitud:
+            datos['beneficiarios_solicitud'].append({
+                'id': ben_sol.id,
+                'solicitud_id': ben_sol.solicitud_id,
+                'nombre': ben_sol.nombre,
+                'primer_apellido': ben_sol.primer_apellido,
+                'segundo_apellido': ben_sol.segundo_apellido,
+                'ano_nacimiento': ben_sol.ano_nacimiento
+            })
+        
+        # Convertir a JSON
+        json_data = json.dumps(datos, indent=2, ensure_ascii=False)
+        
+        # Crear archivo en memoria
+        output = BytesIO()
+        output.write(json_data.encode('utf-8'))
+        output.seek(0)
+        
+        # Generar nombre de archivo con fecha
+        fecha_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'backup_asociacion_{fecha_str}.txt'
+        
+        return send_file(
+            output,
+            mimetype='text/plain',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        flash(f'Error al exportar los datos: {str(e)}', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/importar-datos', methods=['GET', 'POST'])
+@login_required
+@directiva_required
+def importar_datos():
+    """Importa datos desde un archivo JSON"""
+    if request.method == 'GET':
+        return render_template('admin/importar_datos.html')
+    
+    if 'archivo' not in request.files:
+        flash('No se ha seleccionado ningún archivo.', 'error')
+        return render_template('admin/importar_datos.html')
+    
+    archivo = request.files['archivo']
+    if archivo.filename == '':
+        flash('No se ha seleccionado ningún archivo.', 'error')
+        return render_template('admin/importar_datos.html')
+    
+    try:
+        # Leer el archivo
+        contenido = archivo.read().decode('utf-8')
+        datos = json.loads(contenido)
+        
+        # Validar estructura
+        if 'version' not in datos:
+            flash('El archivo no tiene el formato correcto.', 'error')
+            return render_template('admin/importar_datos.html')
+        
+        # Preguntar si se debe limpiar la base de datos primero
+        limpiar_bd = request.form.get('limpiar_bd') == 'on'
+        
+        if limpiar_bd:
+            # Eliminar todos los datos existentes (en orden inverso de dependencias)
+            BeneficiarioSolicitud.query.delete()
+            Beneficiario.query.delete()
+            Inscripcion.query.delete()
+            SolicitudSocio.query.delete()
+            Actividad.query.delete()
+            User.query.delete()
+            db.session.commit()
+        
+        # Importar usuarios
+        usuarios_importados = 0
+        for user_data in datos.get('usuarios', []):
+            try:
+                # Verificar si el usuario ya existe
+                if not limpiar_bd and User.query.filter_by(email=user_data['email']).first():
+                    continue
+                
+                usuario = User(
+                    nombre=user_data['nombre'],
+                    email=user_data['email'],
+                    password_hash=user_data['password_hash'],
+                    password_plain=user_data.get('password_plain'),
+                    rol=user_data['rol'],
+                    fecha_alta=datetime.fromisoformat(user_data['fecha_alta']) if user_data.get('fecha_alta') else datetime.utcnow(),
+                    fecha_validez=datetime.fromisoformat(user_data['fecha_validez']) if user_data.get('fecha_validez') else datetime.utcnow(),
+                    ano_nacimiento=user_data.get('ano_nacimiento'),
+                    fecha_nacimiento=datetime.fromisoformat(user_data['fecha_nacimiento']).date() if user_data.get('fecha_nacimiento') else None,
+                    numero_socio=user_data.get('numero_socio'),
+                    calle=user_data.get('calle'),
+                    numero=user_data.get('numero'),
+                    piso=user_data.get('piso'),
+                    poblacion=user_data.get('poblacion')
+                )
+                db.session.add(usuario)
+                usuarios_importados += 1
+            except Exception as e:
+                flash(f'Error al importar usuario {user_data.get("email", "desconocido")}: {str(e)}', 'warning')
+                continue
+        
+        # Importar actividades
+        actividades_importadas = 0
+        for act_data in datos.get('actividades', []):
+            try:
+                actividad = Actividad(
+                    nombre=act_data['nombre'],
+                    descripcion=act_data.get('descripcion'),
+                    fecha=datetime.fromisoformat(act_data['fecha']) if act_data.get('fecha') else datetime.utcnow(),
+                    aforo_maximo=act_data['aforo_maximo'],
+                    edad_minima=act_data.get('edad_minima'),
+                    edad_maxima=act_data.get('edad_maxima'),
+                    fecha_creacion=datetime.fromisoformat(act_data['fecha_creacion']) if act_data.get('fecha_creacion') else datetime.utcnow()
+                )
+                db.session.add(actividad)
+                actividades_importadas += 1
+            except Exception as e:
+                flash(f'Error al importar actividad {act_data.get("nombre", "desconocida")}: {str(e)}', 'warning')
+                continue
+        
+        # Importar beneficiarios (después de usuarios)
+        beneficiarios_importados = 0
+        for ben_data in datos.get('beneficiarios', []):
+            try:
+                # Verificar que el socio exista
+                if not User.query.get(ben_data['socio_id']):
+                    continue
+                
+                beneficiario = Beneficiario(
+                    socio_id=ben_data['socio_id'],
+                    nombre=ben_data['nombre'],
+                    primer_apellido=ben_data['primer_apellido'],
+                    segundo_apellido=ben_data.get('segundo_apellido'),
+                    ano_nacimiento=ben_data['ano_nacimiento'],
+                    fecha_validez=datetime.fromisoformat(ben_data['fecha_validez']) if ben_data.get('fecha_validez') else datetime.utcnow(),
+                    numero_beneficiario=ben_data.get('numero_beneficiario')
+                )
+                db.session.add(beneficiario)
+                beneficiarios_importados += 1
+            except Exception as e:
+                flash(f'Error al importar beneficiario: {str(e)}', 'warning')
+                continue
+        
+        # Importar inscripciones (después de usuarios y actividades)
+        inscripciones_importadas = 0
+        for ins_data in datos.get('inscripciones', []):
+            try:
+                # Verificar que el usuario y la actividad existan
+                if not User.query.get(ins_data['user_id']):
+                    continue
+                if not Actividad.query.get(ins_data['actividad_id']):
+                    continue
+                if ins_data.get('beneficiario_id') and not Beneficiario.query.get(ins_data['beneficiario_id']):
+                    continue
+                
+                inscripcion = Inscripcion(
+                    user_id=ins_data['user_id'],
+                    actividad_id=ins_data['actividad_id'],
+                    beneficiario_id=ins_data.get('beneficiario_id'),
+                    fecha_inscripcion=datetime.fromisoformat(ins_data['fecha_inscripcion']) if ins_data.get('fecha_inscripcion') else datetime.utcnow(),
+                    asiste=ins_data.get('asiste', False)
+                )
+                db.session.add(inscripcion)
+                inscripciones_importadas += 1
+            except Exception as e:
+                flash(f'Error al importar inscripción: {str(e)}', 'warning')
+                continue
+        
+        # Importar solicitudes
+        solicitudes_importadas = 0
+        for sol_data in datos.get('solicitudes_socio', []):
+            try:
+                solicitud = SolicitudSocio(
+                    nombre=sol_data['nombre'],
+                    primer_apellido=sol_data['primer_apellido'],
+                    segundo_apellido=sol_data.get('segundo_apellido'),
+                    movil=sol_data['movil'],
+                    fecha_nacimiento=datetime.fromisoformat(sol_data['fecha_nacimiento']).date() if sol_data.get('fecha_nacimiento') else None,
+                    miembros_unidad_familiar=sol_data['miembros_unidad_familiar'],
+                    forma_de_pago=sol_data['forma_de_pago'],
+                    estado=sol_data['estado'],
+                    fecha_solicitud=datetime.fromisoformat(sol_data['fecha_solicitud']) if sol_data.get('fecha_solicitud') else datetime.utcnow(),
+                    fecha_confirmacion=datetime.fromisoformat(sol_data['fecha_confirmacion']) if sol_data.get('fecha_confirmacion') else None,
+                    password_solicitud=sol_data.get('password_solicitud'),
+                    calle=sol_data.get('calle'),
+                    numero=sol_data.get('numero'),
+                    piso=sol_data.get('piso'),
+                    poblacion=sol_data.get('poblacion')
+                )
+                db.session.add(solicitud)
+                db.session.flush()  # Para obtener el ID
+                
+                # Importar beneficiarios de solicitudes
+                for ben_sol_data in datos.get('beneficiarios_solicitud', []):
+                    if ben_sol_data.get('solicitud_id') == sol_data.get('id'):
+                        ben_sol = BeneficiarioSolicitud(
+                            solicitud_id=solicitud.id,
+                            nombre=ben_sol_data['nombre'],
+                            primer_apellido=ben_sol_data['primer_apellido'],
+                            segundo_apellido=ben_sol_data.get('segundo_apellido'),
+                            ano_nacimiento=ben_sol_data['ano_nacimiento']
+                        )
+                        db.session.add(ben_sol)
+                
+                solicitudes_importadas += 1
+            except Exception as e:
+                flash(f'Error al importar solicitud: {str(e)}', 'warning')
+                continue
+        
+        # Commit final
+        db.session.commit()
+        
+        flash(f'Importación completada: {usuarios_importados} usuarios, {actividades_importadas} actividades, {beneficiarios_importados} beneficiarios, {inscripciones_importadas} inscripciones, {solicitudes_importadas} solicitudes.', 'success')
+        return redirect(url_for('admin.dashboard'))
+        
+    except json.JSONDecodeError:
+        flash('El archivo no es un JSON válido.', 'error')
+        return render_template('admin/importar_datos.html')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al importar los datos: {str(e)}', 'error')
+        return render_template('admin/importar_datos.html')
