@@ -4,6 +4,10 @@ from models import User, SolicitudSocio, BeneficiarioSolicitud, db
 from datetime import datetime
 import re
 import unicodedata
+import os
+import shutil
+from ftplib import FTP
+import threading
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -60,9 +64,133 @@ def acceso_socios():
     
     return render_template('auth/acceso_socios.html')
 
+def crear_backup_bd():
+    """Crea un backup de la base de datos SQLite y lo sube a FTP"""
+    try:
+        # Obtener la URL de la base de datos desde la configuración de Flask
+        from flask import current_app
+        database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///asociacion.db')
+        fecha_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Solo funciona con SQLite
+        if 'postgres' in database_url.lower():
+            print("[INFO] Backup automático solo disponible para SQLite")
+            return False
+        
+        # SQLite - copiar archivo
+        db_path = database_url.replace('sqlite:///', '')
+        if not os.path.isabs(db_path):
+            # Ruta relativa, buscar en instance/
+            db_path = os.path.join('instance', db_path)
+        
+        backup_filename = f'backup_sqlite_{fecha_str}.db'
+        try:
+            if os.path.exists(db_path):
+                shutil.copy2(db_path, backup_filename)
+                print(f"[OK] Backup creado: {backup_filename}")
+            else:
+                print(f"[ERROR] Archivo de BD no encontrado: {db_path}")
+                return False
+        except Exception as e:
+            print(f"[ERROR] Error al copiar SQLite: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+        
+        # Subir a FTP
+        if subir_backup_ftp(backup_filename):
+            # Eliminar archivo local después de subir
+            try:
+                if os.path.exists(backup_filename):
+                    os.remove(backup_filename)
+                    print(f"[OK] Archivo local eliminado después de subir")
+            except Exception as e:
+                print(f"[ADVERTENCIA] No se pudo eliminar archivo local: {e}")
+            return True
+        else:
+            # Si no se pudo subir, dejar el archivo local
+            print(f"[INFO] Backup guardado localmente: {backup_filename}")
+            return False
+            
+    except Exception as e:
+        print(f"[ERROR] Error general en backup: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def subir_backup_ftp(backup_filename):
+    """Sube el archivo de backup al servidor FTP"""
+    try:
+        # Obtener credenciales FTP de variables de entorno
+        ftp_host = os.environ.get('FTP_HOST')
+        ftp_user = os.environ.get('FTP_USER')
+        ftp_password = os.environ.get('FTP_PASSWORD')
+        ftp_directory = os.environ.get('FTP_DIRECTORY', '/')
+        
+        if not all([ftp_host, ftp_user, ftp_password]):
+            print("[INFO] Variables FTP no configuradas, saltando subida")
+            return False
+        
+        if not os.path.exists(backup_filename):
+            print(f"[ERROR] Archivo de backup no encontrado: {backup_filename}")
+            return False
+        
+        # Conectar a FTP
+        ftp = FTP(ftp_host)
+        ftp.login(ftp_user, ftp_password)
+        
+        # Cambiar al directorio si se especifica
+        if ftp_directory and ftp_directory != '/':
+            try:
+                ftp.cwd(ftp_directory)
+            except:
+                # Intentar crear el directorio si no existe
+                try:
+                    ftp.mkd(ftp_directory)
+                    ftp.cwd(ftp_directory)
+                except:
+                    pass
+        
+        # Subir archivo
+        with open(backup_filename, 'rb') as f:
+            ftp.storbinary(f'STOR {backup_filename}', f)
+        
+        ftp.quit()
+        print(f"[OK] Backup subido a FTP: {backup_filename}")
+        return True
+        
+    except Exception as e:
+        print(f"[ERROR] Error al subir backup a FTP: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 @auth_bp.route('/logout')
 @login_required
 def logout():
+    """Cierra sesión y crea backup automático de la BD"""
+    from flask import current_app
+    
+    # Obtener la instancia de la app antes de crear el hilo
+    app_instance = current_app._get_current_object()
+    
+    # Crear backup en segundo plano (no bloquear el logout)
+    def backup_async():
+        try:
+            # Necesitamos el contexto de la aplicación Flask
+            with app_instance.app_context():
+                crear_backup_bd()
+        except Exception as e:
+            print(f"[ERROR] Error en backup asíncrono: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # Ejecutar backup en un hilo separado para no bloquear
+    thread = threading.Thread(target=backup_async)
+    thread.daemon = True
+    thread.start()
+    
     logout_user()
     flash('Has cerrado sesión correctamente.', 'info')
     return redirect(url_for('auth.acceso_socios'))
