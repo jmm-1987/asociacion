@@ -123,13 +123,18 @@ def subir_backup_ftp(backup_filename):
     """Sube el archivo de backup al servidor FTP"""
     try:
         # Obtener credenciales FTP de variables de entorno
+        # Acepta tanto FTP_PASSWORD como FTP_PASS para compatibilidad
         ftp_host = os.environ.get('FTP_HOST')
         ftp_user = os.environ.get('FTP_USER')
-        ftp_password = os.environ.get('FTP_PASSWORD')
+        ftp_password = os.environ.get('FTP_PASSWORD') or os.environ.get('FTP_PASS')
         ftp_directory = os.environ.get('FTP_DIRECTORY', '/')
         
         if not all([ftp_host, ftp_user, ftp_password]):
-            print("[INFO] Variables FTP no configuradas, saltando subida")
+            print(f"[INFO] Variables FTP no configuradas completamente:")
+            print(f"  FTP_HOST: {'✓' if ftp_host else '✗'}")
+            print(f"  FTP_USER: {'✓' if ftp_user else '✗'}")
+            print(f"  FTP_PASSWORD/FTP_PASS: {'✓' if ftp_password else '✗'}")
+            print(f"  Saltando subida a FTP")
             return False
         
         if not os.path.exists(backup_filename):
