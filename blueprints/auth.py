@@ -37,14 +37,14 @@ def acceso_socios():
             return redirect(url_for('socios.dashboard'))
     
     if request.method == 'POST':
-        email = request.form.get('email')
+        nombre_usuario = request.form.get('nombre_usuario')
         password = request.form.get('password')
         
-        if not email or not password:
+        if not nombre_usuario or not password:
             flash('Por favor, completa todos los campos.', 'error')
             return render_template('auth/acceso_socios.html')
         
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(nombre_usuario=nombre_usuario).first()
         
         if user and user.check_password(password):
             login_user(user)
@@ -226,6 +226,32 @@ def confirmacion_solicitud(solicitud_id):
     """Muestra la página de confirmación con todos los datos de la solicitud"""
     solicitud = SolicitudSocio.query.get_or_404(solicitud_id)
     
+    # Generar nombre de usuario de forma predictiva (igual que en admin.py)
+    # Calcular el próximo número de socio
+    from models import User
+    ultimo_socio = User.query.filter(User.numero_socio.isnot(None)).order_by(User.numero_socio.desc()).first()
+    if ultimo_socio and ultimo_socio.numero_socio:
+        try:
+            ultimo_numero = int(ultimo_socio.numero_socio)
+            nuevo_numero = ultimo_numero + 1
+        except ValueError:
+            nuevo_numero = 1
+    else:
+        nuevo_numero = 1
+    
+    numero_socio = f"{nuevo_numero:04d}"  # Formato 0001, 0002, etc.
+    
+    # Generar nombre de usuario: nombrenumero_de_socio
+    nombre_limpio = solicitud.nombre.lower().replace(' ', '').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u').replace('ñ', 'n')
+    nombre_usuario = f"{nombre_limpio}{numero_socio}"
+    
+    # Verificar si el nombre de usuario ya existe y generar uno único
+    contador = 1
+    nombre_usuario_original = nombre_usuario
+    while User.query.filter_by(nombre_usuario=nombre_usuario).first():
+        nombre_usuario = f"{nombre_limpio}{numero_socio}{contador}"
+        contador += 1
+    
     # Números de pago (estos deberían estar en configuración, por ahora hardcodeados)
     NUMERO_BIZUM = "612 345 678"
     NUMERO_CUENTA = "ES12 3456 7890 1234 5678 9012"
@@ -233,4 +259,6 @@ def confirmacion_solicitud(solicitud_id):
     return render_template('auth/confirmacion_solicitud.html', 
                          solicitud=solicitud,
                          numero_bizum=NUMERO_BIZUM,
-                         numero_cuenta=NUMERO_CUENTA)
+                         numero_cuenta=NUMERO_CUENTA,
+                         nombre_usuario=nombre_usuario,
+                         numero_socio=numero_socio)

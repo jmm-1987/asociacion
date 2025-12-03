@@ -1,9 +1,16 @@
 """
 Script para generar 50 usuarios de prueba desde el formulario de inscripción
+Puede ejecutarse en producción de forma segura.
 """
 import random
 import unicodedata
+import os
+import sys
 from datetime import datetime, timedelta
+
+# Asegurar que se use la configuración correcta
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from app import app, db
 from models import SolicitudSocio, BeneficiarioSolicitud
 
@@ -192,5 +199,27 @@ def crear_solicitudes_test(numero_usuarios=50):
             print(f"  Puedes revisar las solicitudes en el panel de administración.")
 
 if __name__ == '__main__':
+    # Verificar que estamos en el contexto correcto
+    print("=" * 60)
+    print("Script de generación de solicitudes de prueba")
+    print("=" * 60)
+    
+    # Mostrar información del entorno
+    database_url = os.environ.get('DATABASE_URL', 'sqlite:///asociacion.db')
+    if 'postgres' in database_url.lower():
+        print("✓ Modo: PRODUCCIÓN (PostgreSQL)")
+    else:
+        print("✓ Modo: DESARROLLO (SQLite)")
+    
+    print(f"Base de datos: {database_url.split('@')[-1] if '@' in database_url else database_url}")
+    print("=" * 60)
+    
+    # Preguntar confirmación
+    respuesta = input("\n¿Deseas crear 50 solicitudes de prueba? (s/n): ").lower().strip()
+    if respuesta not in ['s', 'si', 'sí', 'y', 'yes']:
+        print("Operación cancelada.")
+        sys.exit(0)
+    
+    print("\nIniciando creación de solicitudes...\n")
     crear_solicitudes_test(50)
 

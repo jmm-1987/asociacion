@@ -494,24 +494,40 @@ footer h4 {
 }
 
 .hero-title {
-    animation: slideInFromBottom 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
     opacity: 0;
     text-align: center;
     margin: 0 auto;
     width: auto;
     max-width: 100%;
+    white-space: normal;
+    position: relative;
+    /* Gradiente arcoíris suave e infantil para el texto */
+    background: linear-gradient(90deg, 
+        #ffb3ba 0%, 
+        #ffdfba 14.28%, 
+        #ffffba 28.56%, 
+        #baffc9 42.84%, 
+        #bae1ff 57.12%, 
+        #d4b3f0 71.4%, 
+        #ffb3d9 85.68%, 
+        #ffb3ba 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    filter: drop-shadow(3px 3px 10px rgba(0, 0, 0, 0.7));
+    animation: slideInFromBottom 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, 
+               rainbowShift 3s ease infinite;
 }
 
-.hero-title .letter {
-    display: inline-block;
-    animation: colorChange 4s ease-in-out infinite;
-    transition: color 0.3s ease;
-    color: white;
-}
-
-.hero-title .letter-space {
-    display: inline-block;
+@keyframes rainbowShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
 }
 
 .hero-overlay p {
@@ -523,6 +539,11 @@ footer h4 {
 .hero-overlay .btn-hazte-socio {
     animation: fadeInScale 1.4s ease-out 0.6s forwards;
     opacity: 0;
+}
+
+.hero-overlay .btn-hazte-socio:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 @keyframes fadeInUp {
@@ -774,54 +795,45 @@ footer h4 {
 
 /* Botón Hazte Socio */
 .btn-hazte-socio {
-    background: linear-gradient(135deg, #fa709a 0%, #fee140 50%, #30cfd0 100%);
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 50%, #30cfd0 100%) !important;
     background-size: 200% 200%;
     animation: gradientMove 3s ease infinite;
-    border: none;
+    border: none !important;
     font-size: 1.5rem;
     letter-spacing: 1px;
     text-transform: uppercase;
     position: relative;
-    overflow: visible;
+    overflow: visible !important;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 10px 30px rgba(250, 112, 154, 0.4);
-    z-index: 1;
-}
-
-.btn-hazte-socio::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    transform: translate(-50%, -50%);
-    transition: width 0.4s ease, height 0.4s ease;
-    z-index: -1;
-    pointer-events: none;
-}
-
-.btn-hazte-socio:hover::before {
-    width: 200px;
-    height: 200px;
+    z-index: 10 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
 }
 
 .btn-hazte-socio:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 15px 40px rgba(250, 112, 154, 0.6);
-    animation: gradientMove 1s ease infinite;
-    background: linear-gradient(135deg, #ff6b9d 0%, #ffeb3b 50%, #4dd0e1 100%);
+    transform: translateY(-5px) scale(1.05) !important;
+    box-shadow: 0 15px 40px rgba(250, 112, 154, 0.8), 0 0 20px rgba(255, 255, 255, 0.5) !important;
+    animation: gradientMove 1s ease infinite !important;
+    background: linear-gradient(135deg, #ff6b9d 0%, #ffeb3b 50%, #4dd0e1 100%) !important;
+    filter: brightness(1.1);
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 10 !important;
+}
+
+.btn-hazte-socio:active {
+    transform: translateY(-2px) scale(1.02) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .btn-hazte-socio * {
     position: relative;
-    z-index: 2;
-}
-
-.btn-hazte-socio:active {
-    transform: translateY(-2px) scale(1.02);
+    z-index: 11 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 /* Texto manuscrito */

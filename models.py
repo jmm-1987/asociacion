@@ -11,7 +11,7 @@ class User(UserMixin, db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    nombre_usuario = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     password_plain = db.Column(db.String(255), nullable=True)  # Contraseña en texto plano (solo para mostrar a admin)
     rol = db.Column(db.String(20), nullable=False)  # 'directiva' o 'socio'

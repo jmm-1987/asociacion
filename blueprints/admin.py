@@ -73,12 +73,12 @@ def gestion_socios():
     search_query = request.args.get('search', '').strip()
     
     if search_query:
-        # Buscar en nombre, email o fecha de validez
+        # Buscar en nombre, nombre_usuario o fecha de validez
         socios = User.query.filter(
             User.rol == 'socio',
             db.or_(
                 User.nombre.contains(search_query),
-                User.email.contains(search_query),
+                User.nombre_usuario.contains(search_query),
                 db.func.strftime('%d/%m/%Y', User.fecha_validez).contains(search_query)
             )
         ).order_by(User.nombre).all()
@@ -104,7 +104,7 @@ def nuevo_socio():
         forma_de_pago = request.form.get('forma_de_pago', '').strip()
         password = request.form.get('password', '').strip()
         ano_nacimiento = request.form.get('ano_nacimiento', '').strip()
-        email = request.form.get('email', '').strip()
+        nombre_usuario = request.form.get('nombre_usuario', '').strip()
         
         # Dirección
         calle = request.form.get('calle', '').strip()
@@ -113,14 +113,14 @@ def nuevo_socio():
         poblacion = request.form.get('poblacion', '').strip()
         
         # Validaciones
-        if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, ano_nacimiento, email, calle, numero, poblacion]):
+        if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, ano_nacimiento, nombre_usuario, calle, numero, poblacion]):
             flash('Todos los campos obligatorios deben estar completos.', 'error')
             from datetime import datetime as dt
             return render_template('admin/nuevo_socio.html', datetime=dt)
         
-        # Verificar si el email ya existe
-        if User.query.filter_by(email=email).first():
-            flash('Ya existe un usuario con este email.', 'error')
+        # Verificar si el nombre de usuario ya existe
+        if User.query.filter_by(nombre_usuario=nombre_usuario).first():
+            flash('Ya existe un usuario con este nombre de usuario.', 'error')
             from datetime import datetime as dt
             return render_template('admin/nuevo_socio.html', datetime=dt)
         
@@ -182,7 +182,7 @@ def nuevo_socio():
         # Crear nuevo socio
         nuevo_socio = User(
             nombre=nombre_completo,
-            email=email,
+            nombre_usuario=nombre_usuario,
             rol='socio',
             fecha_alta=datetime.utcnow(),
             fecha_validez=fecha_validez,
@@ -534,21 +534,21 @@ def inscritos_pdf(actividad_id):
         
         # Tabla de inscritos
         if inscripciones:
-            data = [['#', 'Nombre', 'Email', 'Fecha de Inscripción', 'Asistencia']]
+            data = [['#', 'Nombre', 'Nombre de Usuario', 'Fecha de Inscripción', 'Asistencia']]
             
             for idx, inscripcion in enumerate(inscripciones, 1):
                 asistencia = "Asistió" if inscripcion.asiste else "No asistió"
                 if inscripcion.beneficiario:
                     nombre_completo = f"{inscripcion.beneficiario.nombre} {inscripcion.beneficiario.primer_apellido}"
-                    email_mostrar = f"Beneficiario de {inscripcion.usuario.nombre}"
+                    nombre_usuario_mostrar = f"Beneficiario de {inscripcion.usuario.nombre}"
                 else:
                     nombre_completo = inscripcion.usuario.nombre
-                    email_mostrar = inscripcion.usuario.email
+                    nombre_usuario_mostrar = inscripcion.usuario.nombre_usuario
                 
                 data.append([
                     str(idx),
                     nombre_completo,
-                    email_mostrar,
+                    nombre_usuario_mostrar,
                     inscripcion.fecha_inscripcion.strftime('%d/%m/%Y %H:%M'),
                     asistencia
                 ])
@@ -772,7 +772,7 @@ def confirmar_solicitud(solicitud_id):
     # Verificar si el nombre de usuario ya existe y generar uno único
     contador = 1
     nombre_usuario_original = nombre_usuario
-    while User.query.filter_by(email=nombre_usuario).first():
+    while User.query.filter_by(nombre_usuario=nombre_usuario).first():
         nombre_usuario = f"{nombre_limpio}{numero_socio}{contador}"
         contador += 1
     
@@ -794,7 +794,7 @@ def confirmar_solicitud(solicitud_id):
     
     nuevo_socio = User(
         nombre=nombre_completo,
-        email=nombre_usuario,  # Usar nombre de usuario como email
+        nombre_usuario=nombre_usuario,
         rol='socio',
         fecha_alta=datetime.utcnow(),
         fecha_validez=fecha_validez,
@@ -891,7 +891,7 @@ def exportar_datos():
             datos['usuarios'].append({
                 'id': usuario.id,
                 'nombre': usuario.nombre,
-                'email': usuario.email,
+                'nombre_usuario': usuario.nombre_usuario,
                 'password_hash': usuario.password_hash,
                 'password_plain': usuario.password_plain,
                 'rol': usuario.rol,
@@ -1047,13 +1047,19 @@ def importar_datos():
         usuarios_importados = 0
         for user_data in datos.get('usuarios', []):
             try:
-                # Verificar si el usuario ya existe
-                if not limpiar_bd and User.query.filter_by(email=user_data['email']).first():
+                # Verificar si el usuario ya existe (compatibilidad con datos antiguos que usan 'email')
+                nombre_usuario = user_data.get('nombre_usuario') or user_data.get('email')
+                if not nombre_usuario:
+                    flash('Usuario sin nombre_usuario, saltando.', 'warning')
+                    continue
+                    
+                if not limpiar_bd and User.query.filter_by(nombre_usuario=nombre_usuario).first():
+                    flash(f"Usuario con nombre_usuario {nombre_usuario} ya existe, saltando.", 'warning')
                     continue
                 
                 usuario = User(
                     nombre=user_data['nombre'],
-                    email=user_data['email'],
+                    nombre_usuario=nombre_usuario,
                     password_hash=user_data['password_hash'],
                     password_plain=user_data.get('password_plain'),
                     rol=user_data['rol'],
@@ -1070,7 +1076,7 @@ def importar_datos():
                 db.session.add(usuario)
                 usuarios_importados += 1
             except Exception as e:
-                flash(f'Error al importar usuario {user_data.get("email", "desconocido")}: {str(e)}', 'warning')
+                flash(f'Error al importar usuario {user_data.get("nombre_usuario", user_data.get("email", "desconocido"))}: {str(e)}', 'warning')
                 continue
         
         # Importar actividades

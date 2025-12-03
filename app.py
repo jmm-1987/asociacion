@@ -68,33 +68,6 @@ def create_app():
     try:
         with app.app_context():
             db.create_all()
-            
-            # Crear usuarios de prueba si no existen
-            from models import User
-            if not User.query.first():
-                # Usuario directiva
-                directiva = User(
-                    nombre='Administrador',
-                    email='admin@asociacion.com',
-                    rol='directiva',
-                    fecha_alta=datetime.now(),
-                    fecha_validez=datetime.now() + timedelta(days=365)
-                )
-                directiva.set_password('admin123')
-                
-                # Usuario socio
-                socio = User(
-                    nombre='Juan Pérez',
-                    email='juan@email.com',
-                    rol='socio',
-                    fecha_alta=datetime.now(),
-                    fecha_validez=datetime.now() + timedelta(days=30)
-                )
-                socio.set_password('socio123')
-                
-                db.session.add(directiva)
-                db.session.add(socio)
-                db.session.commit()
     except Exception as e:
         # Si hay un error al inicializar la BD, lo registramos pero no fallamos
         # La app seguirá funcionando y la BD se inicializará en el primer request

@@ -36,7 +36,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Nombre</th>
-                                    <th>Email</th>
+                                    <th>Nombre de Usuario</th>
                                     <th>Fecha de Inscripción</th>
                                     <th class="text-center">Asistencia</th>
                                 </tr>
@@ -62,7 +62,7 @@
                                             {% if inscripcion.beneficiario %}
                                                 <small class="text-muted">Beneficiario</small>
                                             {% else %}
-                                                {{ inscripcion.usuario.email }}
+                                                {{ inscripcion.usuario.nombre_usuario }}
                                             {% endif %}
                                         </td>
                                         <td>{{ inscripcion.fecha_inscripcion.strftime('%d/%m/%Y %H:%M') }}</td>

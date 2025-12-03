@@ -4,37 +4,14 @@
 
 {% block scripts %}
 <script>
-// Desactivar el JavaScript problemático para el login
-document.addEventListener('DOMContentLoaded', function() {
-    const submitButtons = document.querySelectorAll('button[type="submit"]');
-    submitButtons.forEach(function(button) {
-        // Remover cualquier listener existente
-        button.replaceWith(button.cloneNode(true));
+    // Desactivar el JavaScript problemático para el login
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitButtons = document.querySelectorAll('button[type="submit"]');
+        submitButtons.forEach(function(button) {
+            // Remover cualquier listener existente
+            button.replaceWith(button.cloneNode(true));
+        });
     });
-    
-    // Envolver cada letra del título en un span para animación de colores
-    const heroTitle = document.querySelector('.hero-title');
-    if (heroTitle) {
-        const text = heroTitle.textContent;
-        const colors = [
-            '#ff6b6b', '#4ecdc4', '#ffe66d', '#95e1d3', '#f38181',
-            '#aa96da', '#fcbad3', '#a8e6cf', '#ffd3a5', '#fd9853',
-            '#a8d8ea', '#ffaaa5', '#ffd93d', '#6bcf7f', '#4d9de0',
-            '#e15554', '#e1bc29', '#3bb273', '#7768ae', '#f18f01'
-        ];
-        let letterIndex = 0;
-        const wrappedText = text.split('').map((char, index) => {
-            if (char === ' ') {
-                return '<span class="letter-space"> </span>';
-            }
-            const colorIndex = letterIndex % colors.length;
-            const delay = 2 + (letterIndex * 0.05);
-            letterIndex++;
-            return `<span class="letter" data-index="${index}" style="--letter-color: ${colors[colorIndex]}; animation-delay: ${delay}s;">${char}</span>`;
-        }).join('');
-        heroTitle.innerHTML = wrappedText;
-    }
-});
 </script>
 {% endblock %}
 

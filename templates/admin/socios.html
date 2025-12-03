@@ -24,7 +24,7 @@
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text" class="form-control" name="search" 
-                           placeholder="Buscar por nombre, email o fecha de validez..." 
+                           placeholder="Buscar por nombre, nombre de usuario o fecha de validez..." 
                            value="{{ search_query or '' }}" id="searchInput">
                 </div>
             </div>
@@ -70,7 +70,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Nombre</th>
-                            <th>Email</th>
+                            <th>Nombre de Usuario</th>
                             <th>Fecha de Alta</th>
                             <th>Fecha de Validez</th>
                             <th>Estado</th>
@@ -87,7 +87,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {{ socio.email }}
+                                    {{ socio.nombre_usuario }}
                                     {% if socio.password_plain %}
                                         <br><small class="text-info">Contraseña: <code>{{ socio.password_plain }}</code></small>
                                     {% endif %}
