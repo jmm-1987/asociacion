@@ -6,8 +6,13 @@ import re
 import unicodedata
 import os
 import shutil
-from ftplib import FTP
 import threading
+try:
+    import paramiko
+    SFTP_AVAILABLE = True
+except ImportError:
+    SFTP_AVAILABLE = False
+    print("[WARNING] paramiko no está instalado. SFTP no estará disponible.")
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -120,53 +125,71 @@ def crear_backup_bd():
 
 
 def subir_backup_ftp(backup_filename):
-    """Sube el archivo de backup al servidor FTP"""
+    """Sube el archivo de backup al servidor SFTP"""
     try:
-        # Obtener credenciales FTP de variables de entorno
-        # Acepta tanto FTP_PASSWORD como FTP_PASS para compatibilidad
-        ftp_host = os.environ.get('FTP_HOST')
-        ftp_user = os.environ.get('FTP_USER')
-        ftp_password = os.environ.get('FTP_PASSWORD') or os.environ.get('FTP_PASS')
-        ftp_directory = os.environ.get('FTP_DIRECTORY', '/')
+        if not SFTP_AVAILABLE:
+            print("[ERROR] paramiko no está disponible. No se puede subir el backup.")
+            return False
         
-        if not all([ftp_host, ftp_user, ftp_password]):
-            print(f"[INFO] Variables FTP no configuradas completamente:")
-            print(f"  FTP_HOST: {'✓' if ftp_host else '✗'}")
-            print(f"  FTP_USER: {'✓' if ftp_user else '✗'}")
-            print(f"  FTP_PASSWORD/FTP_PASS: {'✓' if ftp_password else '✗'}")
-            print(f"  Saltando subida a FTP")
+        # Obtener credenciales SFTP de variables de entorno
+        # Acepta tanto FTP_PASSWORD como FTP_PASS para compatibilidad
+        sftp_host = os.environ.get('FTP_HOST')
+        sftp_user = os.environ.get('FTP_USER')
+        sftp_password = os.environ.get('FTP_PASSWORD') or os.environ.get('FTP_PASS')
+        sftp_directory = os.environ.get('FTP_DIRECTORY', '/')
+        
+        # Obtener puerto SFTP (por defecto 22)
+        sftp_port = int(os.environ.get('SFTP_PORT', '22'))
+        
+        if not all([sftp_host, sftp_user, sftp_password]):
+            print(f"[INFO] Variables SFTP no configuradas completamente:")
+            print(f"  FTP_HOST: {'✓' if sftp_host else '✗'}")
+            print(f"  FTP_USER: {'✓' if sftp_user else '✗'}")
+            print(f"  FTP_PASSWORD/FTP_PASS: {'✓' if sftp_password else '✗'}")
+            print(f"  Saltando subida a SFTP")
             return False
         
         if not os.path.exists(backup_filename):
             print(f"[ERROR] Archivo de backup no encontrado: {backup_filename}")
             return False
         
-        # Conectar a FTP
-        ftp = FTP(ftp_host)
-        ftp.login(ftp_user, ftp_password)
+        # Conectar a SFTP
+        transport = paramiko.Transport((sftp_host, sftp_port))
+        transport.connect(username=sftp_user, password=sftp_password)
+        sftp = paramiko.SFTPClient.from_transport(transport)
         
         # Cambiar al directorio si se especifica
-        if ftp_directory and ftp_directory != '/':
+        if sftp_directory and sftp_directory != '/':
             try:
-                ftp.cwd(ftp_directory)
-            except:
+                sftp.chdir(sftp_directory)
+            except IOError:
                 # Intentar crear el directorio si no existe
                 try:
-                    ftp.mkd(ftp_directory)
-                    ftp.cwd(ftp_directory)
-                except:
-                    pass
+                    # Crear directorios recursivamente si no existen
+                    dirs = sftp_directory.strip('/').split('/')
+                    current_path = ''
+                    for dir_name in dirs:
+                        if dir_name:
+                            current_path = current_path + '/' + dir_name if current_path else '/' + dir_name
+                            try:
+                                sftp.chdir(current_path)
+                            except IOError:
+                                sftp.mkdir(current_path)
+                                sftp.chdir(current_path)
+                except Exception as e:
+                    print(f"[WARNING] No se pudo crear/entrar al directorio {sftp_directory}: {e}")
         
         # Subir archivo
-        with open(backup_filename, 'rb') as f:
-            ftp.storbinary(f'STOR {backup_filename}', f)
+        remote_path = os.path.join(sftp_directory, backup_filename).replace('\\', '/')
+        sftp.put(backup_filename, remote_path)
         
-        ftp.quit()
-        print(f"[OK] Backup subido a FTP: {backup_filename}")
+        sftp.close()
+        transport.close()
+        print(f"[OK] Backup subido a SFTP: {remote_path}")
         return True
         
     except Exception as e:
-        print(f"[ERROR] Error al subir backup a FTP: {e}")
+        print(f"[ERROR] Error al subir backup a SFTP: {e}")
         import traceback
         traceback.print_exc()
         return False
