@@ -26,7 +26,7 @@ ENV/
 env/
 
 # Flask
-instance/
+#instance/
 .webassets-cache
 
 # Database
