@@ -24,13 +24,55 @@ def create_app():
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///asociacion.db'
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_pre_ping': True,
-        'pool_recycle': 300,
-    }
+    
+    # Configuración específica según el tipo de base de datos
+    if database_url and 'sqlite' in database_url.lower():
+        # Configuración optimizada para SQLite en producción
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'connect_args': {
+                'timeout': 30,  # Timeout de 30 segundos para operaciones
+                'check_same_thread': False,  # Permitir múltiples hilos
+                'isolation_level': None,  # Usar autocommit para mejor control
+            },
+            'pool_pre_ping': True,
+        }
+    elif database_url:
+        # Configuración para PostgreSQL
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+        }
+    else:
+        # SQLite local (desarrollo)
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'connect_args': {
+                'timeout': 30,
+                'check_same_thread': False,
+                'isolation_level': None,
+            },
+            'pool_pre_ping': True,
+        }
     
     # Inicializar extensiones con la app
     db.init_app(app)
+    
+    # Configurar SQLite con WAL mode para mejor consistencia y rendimiento
+    with app.app_context():
+        try:
+            database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            if 'sqlite' in database_url.lower():
+                # Habilitar WAL mode para mejor consistencia y rendimiento
+                from sqlalchemy import text
+                with db.engine.connect() as conn:
+                    conn.execute(text('PRAGMA journal_mode=WAL;'))
+                    conn.execute(text('PRAGMA synchronous=NORMAL;'))
+                    conn.execute(text('PRAGMA foreign_keys=ON;'))
+                    conn.execute(text('PRAGMA busy_timeout=30000;'))  # 30 segundos timeout
+                    conn.execute(text('PRAGMA cache_size=-64000;'))  # 64MB cache
+                    conn.commit()
+                print("[INFO] SQLite configurado con WAL mode y optimizaciones para producción")
+        except Exception as e:
+            print(f"[WARNING] No se pudo configurar SQLite: {e}")
     login_manager.init_app(app)
     
     # Configurar Flask-Login

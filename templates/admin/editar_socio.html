@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Socio - Asociación de Vecinos de Montealto{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-lg border-0">
+            <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #ff9999 0%, #ffb366 16.66%, #ffeb99 33.33%, #99ff99 50%, #9999ff 66.66%, #b399e6 83.33%, #d4b3f0 100%);">
+                <h2 class="mb-0 text-white fw-bold">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Editar Socio
+                </h2>
+                <p class="text-white-50 mb-0 mt-2">Modificar datos del socio y beneficiarios</p>
+            </div>
+            <div class="card-body p-5">
+                <form method="POST" action="{{ url_for('admin.editar_socio', socio_id=socio.id) }}">
+                    <!-- Sección: Datos del socio -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-badge me-2"></i>
+                                Datos del Socio
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="nombre" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" 
+                                           value="{{ nombre_parts.nombre }}" required 
+                                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="primer_apellido" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" 
+                                           value="{{ nombre_parts.primer_apellido }}" required 
+                                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="segundo_apellido" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Segundo Apellido
+                                    </label>
+                                    <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
+                                           value="{{ nombre_parts.segundo_apellido or '' }}" 
+                                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           title="Solo letras y espacios">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="nombre_usuario" class="form-label fw-bold">
+                                        <i class="bi bi-person me-1"></i>Nombre de Usuario <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario" 
+                                           value="{{ socio.nombre_usuario }}" required>
+                                    <small class="text-muted">Nombre de usuario para acceder al sistema</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="password" class="form-label fw-bold">
+                                        <i class="bi bi-lock me-1"></i>Nueva Contraseña
+                                    </label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           minlength="6" title="Mínimo 6 caracteres (dejar vacío para no cambiar)">
+                                    <small class="text-muted">Dejar vacío para mantener la contraseña actual</small>
+                                    {% if socio.password_plain %}
+                                        <small class="text-info d-block mt-1">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Contraseña actual: <code>{{ socio.password_plain }}</code>
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="ano_nacimiento" class="form-label fw-bold">
+                                        <i class="bi bi-calendar me-1"></i>Año de Nacimiento
+                                    </label>
+                                    <input type="number" class="form-control" id="ano_nacimiento" name="ano_nacimiento" 
+                                           value="{{ socio.ano_nacimiento or '' }}" 
+                                           min="1900" max="{{ datetime.now().year }}" title="Año válido">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-info-circle me-1"></i>Información del Socio
+                                    </label>
+                                    <div class="form-control-plaintext">
+                                        <strong>Número de Socio:</strong> {{ socio.numero_socio or 'No asignado' }}<br>
+                                        <strong>Fecha de Alta:</strong> {{ socio.fecha_alta.strftime('%d/%m/%Y') if socio.fecha_alta else 'N/A' }}<br>
+                                        <strong>Validez hasta:</strong> {{ socio.fecha_validez.strftime('%d/%m/%Y') if socio.fecha_validez else 'N/A' }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sección: Dirección -->
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="bi bi-geo-alt me-2"></i>Dirección
+                                    </h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="calle" class="form-label fw-bold">
+                                        <i class="bi bi-signpost me-1"></i>Calle <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="calle" name="calle" 
+                                           value="{{ socio.calle or '' }}" required placeholder="Nombre de la calle">
+                                </div>
+                                
+                                <div class="col-md-3 mb-3">
+                                    <label for="numero" class="form-label fw-bold">
+                                        <i class="bi bi-123 me-1"></i>Número <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="numero" name="numero" 
+                                           value="{{ socio.numero or '' }}" required placeholder="Número">
+                                </div>
+                                
+                                <div class="col-md-3 mb-3">
+                                    <label for="piso" class="form-label fw-bold">
+                                        <i class="bi bi-building me-1"></i>Piso
+                                    </label>
+                                    <input type="text" class="form-control" id="piso" name="piso" 
+                                           value="{{ socio.piso or '' }}" placeholder="Ej: 2º B (opcional)">
+                                </div>
+                                
+                                <div class="col-md-12 mb-3">
+                                    <label for="poblacion" class="form-label fw-bold">
+                                        <i class="bi bi-geo-alt-fill me-1"></i>Población <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="poblacion" name="poblacion" 
+                                           value="{{ socio.poblacion or '' }}" required placeholder="Nombre de la población">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección: Beneficiarios -->
+                    <div class="card mb-4 border-success">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-people-fill me-2"></i>
+                                Beneficiarios
+                            </h5>
+                            <button type="button" class="btn btn-light btn-sm" onclick="añadirBeneficiario()">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                Añadir Beneficiario
+                            </button>
+                        </div>
+                        <div class="card-body" id="beneficiarios-container">
+                            {% if beneficiarios %}
+                                {% for beneficiario in beneficiarios %}
+                                    <div class="beneficiario-item mb-3 p-3 border rounded" data-index="{{ loop.index }}">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0 text-success">
+                                                <i class="bi bi-person-circle me-2"></i>
+                                                Beneficiario {{ loop.index }}
+                                            </h6>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarBeneficiario(this)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" 
+                                                       name="beneficiario_nombre_{{ loop.index }}" 
+                                                       value="{{ beneficiario.nombre }}" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" 
+                                                       name="beneficiario_primer_apellido_{{ loop.index }}" 
+                                                       value="{{ beneficiario.primer_apellido }}" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="bi bi-person me-1"></i>Segundo Apellido
+                                                </label>
+                                                <input type="text" class="form-control" 
+                                                       name="beneficiario_segundo_apellido_{{ loop.index }}" 
+                                                       value="{{ beneficiario.segundo_apellido or '' }}">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="bi bi-calendar me-1"></i>Año de Nacimiento <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="number" class="form-control" 
+                                                       name="beneficiario_ano_{{ loop.index }}" 
+                                                       value="{{ beneficiario.ano_nacimiento }}" 
+                                                       required min="1900" max="{{ datetime.now().year }}">
+                                            </div>
+                                            {% if beneficiario.numero_beneficiario %}
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="bi bi-tag me-1"></i>Número de Beneficiario
+                                                </label>
+                                                <input type="text" class="form-control" 
+                                                       value="{{ beneficiario.numero_beneficiario }}" disabled>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-lg me-2"></i>
+                            Guardar Cambios
+                        </button>
+                        <a href="{{ url_for('admin.gestion_socios') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Volver
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Calcular el siguiente índice disponible
+function getNextBeneficiarioIndex() {
+    const items = document.querySelectorAll('.beneficiario-item');
+    let maxIndex = 0;
+    items.forEach(item => {
+        const indexAttr = item.getAttribute('data-index');
+        if (indexAttr) {
+            const index = parseInt(indexAttr);
+            if (index > maxIndex) {
+                maxIndex = index;
+            }
+        }
+    });
+    return maxIndex + 1;
+}
+
+function añadirBeneficiario() {
+    const container = document.getElementById('beneficiarios-container');
+    const añoActual = new Date().getFullYear();
+    const nuevoIndex = getNextBeneficiarioIndex();
+    
+    const nuevoBeneficiario = document.createElement('div');
+    nuevoBeneficiario.className = 'beneficiario-item mb-3 p-3 border rounded';
+    nuevoBeneficiario.setAttribute('data-index', nuevoIndex);
+    
+    nuevoBeneficiario.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0 text-success">
+                <i class="bi bi-person-circle me-2"></i>
+                Beneficiario ${nuevoIndex}
+            </h6>
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarBeneficiario(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" 
+                       name="beneficiario_nombre_${nuevoIndex}" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" 
+                       name="beneficiario_primer_apellido_${nuevoIndex}" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-person me-1"></i>Segundo Apellido
+                </label>
+                <input type="text" class="form-control" 
+                       name="beneficiario_segundo_apellido_${nuevoIndex}">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-calendar me-1"></i>Año de Nacimiento <span class="text-danger">*</span>
+                </label>
+                <input type="number" class="form-control" 
+                       name="beneficiario_ano_${nuevoIndex}" 
+                       required min="1900" max="${añoActual}">
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(nuevoBeneficiario);
+}
+
+function eliminarBeneficiario(btn) {
+    if (confirm('¿Estás seguro de que quieres eliminar este beneficiario?')) {
+        btn.closest('.beneficiario-item').remove();
+    }
+}
+
+// Función para convertir a mayúsculas preservando ñ
+function convertirAMayusculas(campo) {
+    if (campo && campo.value) {
+        let texto = campo.value;
+        texto = texto.replace(/ñ/g, '\uE000').replace(/Ñ/g, '\uE000');
+        texto = texto.toUpperCase();
+        texto = texto.replace(/\uE000/g, 'Ñ');
+        campo.value = texto;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar a campos de texto
+    const camposTexto = ['nombre', 'primer_apellido', 'segundo_apellido', 'calle', 'poblacion'];
+    camposTexto.forEach(function(campoId) {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.addEventListener('input', function(e) {
+                convertirAMayusculas(e.target);
+            });
+            campo.addEventListener('blur', function(e) {
+                e.target.value = e.target.value.trim();
+                convertirAMayusculas(e.target);
+            });
+        }
+    });
+    
+    // Aplicar a campos de beneficiarios
+    document.addEventListener('input', function(e) {
+        if (e.target.name && e.target.name.startsWith('beneficiario_')) {
+            if (e.target.name.includes('nombre') || e.target.name.includes('apellido')) {
+                convertirAMayusculas(e.target);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

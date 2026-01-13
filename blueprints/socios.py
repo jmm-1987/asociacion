@@ -133,15 +133,22 @@ def inscribir_actividad(actividad_id):
         beneficiario_id=beneficiario.id if es_beneficiario else None
     )
     
-    db.session.add(inscripcion)
-    db.session.commit()
-    
-    if es_beneficiario:
-        flash(f'{nombre_inscrito} se ha inscrito exitosamente en "{actividad.nombre}".', 'success')
-    else:
-        flash(f'Te has inscrito exitosamente en "{actividad.nombre}".', 'success')
-    
-    return redirect(url_for('socios.dashboard'))
+    try:
+        db.session.add(inscripcion)
+        db.session.commit()
+        
+        if es_beneficiario:
+            flash(f'{nombre_inscrito} se ha inscrito exitosamente en "{actividad.nombre}".', 'success')
+        else:
+            flash(f'Te has inscrito exitosamente en "{actividad.nombre}".', 'success')
+        
+        return redirect(url_for('socios.dashboard'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al inscribirse en la actividad: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for('socios.actividades'))
 
 @socios_bp.route('/actividades/<int:actividad_id>/cancelar', methods=['POST'])
 @login_required
@@ -194,15 +201,22 @@ def cancelar_inscripcion(actividad_id):
         return redirect(url_for('socios.dashboard'))
     
     # Permitir cancelar en cualquier momento (sin restricción de tiempo)
-    db.session.delete(inscripcion)
-    db.session.commit()
-    
-    if beneficiario_id and beneficiario_id != 'socio':
-        flash(f'Has cancelado la inscripción de {nombre_cancelar} en "{actividad.nombre}".', 'success')
-    else:
-        flash(f'Has cancelado tu inscripción en "{actividad.nombre}".', 'success')
-    
-    return redirect(url_for('socios.dashboard'))
+    try:
+        db.session.delete(inscripcion)
+        db.session.commit()
+        
+        if beneficiario_id and beneficiario_id != 'socio':
+            flash(f'Has cancelado la inscripción de {nombre_cancelar} en "{actividad.nombre}".', 'success')
+        else:
+            flash(f'Has cancelado tu inscripción en "{actividad.nombre}".', 'success')
+        
+        return redirect(url_for('socios.dashboard'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al cancelar la inscripción: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for('socios.dashboard'))
 
 @socios_bp.route('/mis-actividades')
 @login_required

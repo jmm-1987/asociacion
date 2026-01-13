@@ -9,7 +9,10 @@ import re
 import unicodedata
 import json
 import os
+import shutil
+import subprocess
 from io import BytesIO, StringIO
+from flask import current_app
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
@@ -69,27 +72,144 @@ def dashboard():
 @login_required
 @directiva_required
 def gestion_socios():
-    # Obtener parámetro de búsqueda
+    # Obtener parámetros de búsqueda y filtro
     search_query = request.args.get('search', '').strip()
+    solo_ninos = request.args.get('solo_ninos', '').strip() == 'on'
     
+    # Construir query base
+    query = User.query.filter(User.rol == 'socio')
+    
+    # Aplicar filtro de solo niños (menores de 18 años)
+    if solo_ninos:
+        año_actual = datetime.now().year
+        año_limite = año_actual - 18
+        # Obtener IDs de socios que tienen beneficiarios niños
+        socios_ids_con_ninos = db.session.query(Beneficiario.socio_id).filter(
+            Beneficiario.ano_nacimiento >= año_limite
+        ).distinct().all()
+        socios_ids_con_ninos = [s[0] for s in socios_ids_con_ninos]
+        
+        # Filtrar: socio es niño O tiene beneficiarios niños
+        condiciones = [User.ano_nacimiento >= año_limite]
+        if socios_ids_con_ninos:
+            condiciones.append(User.id.in_(socios_ids_con_ninos))
+        
+        query = query.filter(db.or_(*condiciones))
+    
+    # Aplicar búsqueda
     if search_query:
-        # Buscar en nombre, nombre_usuario o fecha de validez
-        socios = User.query.filter(
-            User.rol == 'socio',
+        query = query.filter(
             db.or_(
                 User.nombre.contains(search_query),
                 User.nombre_usuario.contains(search_query),
                 db.func.strftime('%d/%m/%Y', User.fecha_validez).contains(search_query)
             )
-        ).order_by(User.nombre).all()
-    else:
-        socios = User.query.filter_by(rol='socio').order_by(User.nombre).all()
+        )
+    
+    socios = query.order_by(User.nombre).all()
     
     # Cargar beneficiarios para cada socio
     for socio in socios:
         socio.beneficiarios_lista = Beneficiario.query.filter_by(socio_id=socio.id).order_by(Beneficiario.nombre).all()
     
-    return render_template('admin/socios.html', socios=socios, search_query=search_query)
+    from datetime import datetime as dt
+    return render_template('admin/socios.html', socios=socios, search_query=search_query, solo_ninos=solo_ninos, datetime=dt)
+
+@admin_bp.route('/beneficiarios')
+@login_required
+@directiva_required
+def gestion_beneficiarios():
+    # Obtener parámetros de búsqueda y filtro
+    search_query = request.args.get('search', '').strip()
+    solo_ninos = request.args.get('solo_ninos', '').strip() == 'on'
+    
+    año_actual = datetime.now().year
+    año_limite = año_actual - 18
+    
+    # Obtener beneficiarios tradicionales
+    query_beneficiarios = Beneficiario.query.join(User).filter(User.rol == 'socio')
+    
+    # Aplicar filtro de solo niños (menores de 18 años)
+    if solo_ninos:
+        query_beneficiarios = query_beneficiarios.filter(Beneficiario.ano_nacimiento >= año_limite)
+    
+    # Aplicar búsqueda en beneficiarios
+    if search_query:
+        query_beneficiarios = query_beneficiarios.filter(
+            db.or_(
+                Beneficiario.nombre.contains(search_query),
+                Beneficiario.primer_apellido.contains(search_query),
+                Beneficiario.segundo_apellido.contains(search_query),
+                Beneficiario.numero_beneficiario.contains(search_query),
+                User.nombre.contains(search_query),
+                User.numero_socio.contains(search_query)
+            )
+        )
+    
+    beneficiarios_list = query_beneficiarios.order_by(Beneficiario.nombre).all()
+    
+    # Obtener TODOS los socios (todos los socios también son beneficiarios)
+    query_socios = User.query.filter(User.rol == 'socio')
+    
+    # Aplicar filtro de solo niños si está activo
+    if solo_ninos:
+        query_socios = query_socios.filter(User.ano_nacimiento >= año_limite)
+    
+    # Aplicar búsqueda en socios
+    if search_query:
+        query_socios = query_socios.filter(
+            db.or_(
+                User.nombre.contains(search_query),
+                User.nombre_usuario.contains(search_query),
+                User.numero_socio.contains(search_query)
+            )
+        )
+    
+    socios = query_socios.order_by(User.nombre).all()
+    
+    # Crear una lista unificada de beneficiarios
+    # Convertir beneficiarios a objetos con estructura común
+    beneficiarios_unificados = []
+    
+    # Añadir beneficiarios tradicionales
+    for ben in beneficiarios_list:
+        ben.socio_info = User.query.get(ben.socio_id)
+        ben.es_socio = False
+        beneficiarios_unificados.append(ben)
+    
+    # Añadir TODOS los socios como beneficiarios (cada socio tiene su propia línea)
+    # Cada socio aparece como beneficiario de sí mismo, independientemente de si tiene otros beneficiarios
+    for socio in socios:
+        # Crear un objeto similar a Beneficiario pero para el socio
+        # El socio es beneficiario de sí mismo
+        class BeneficiarioSocio:
+            def __init__(self, socio):
+                self.id = socio.id
+                # Separar nombre completo en partes
+                partes = socio.nombre.split(' ', 2)
+                self.nombre = partes[0] if len(partes) > 0 else ''
+                self.primer_apellido = partes[1] if len(partes) > 1 else ''
+                self.segundo_apellido = partes[2] if len(partes) > 2 else None
+                self.ano_nacimiento = socio.ano_nacimiento
+                self.numero_beneficiario = socio.numero_socio  # El número de beneficiario es el mismo que el número de socio
+                self.fecha_validez = socio.fecha_validez
+                self.socio_id = socio.id  # El socio es beneficiario de sí mismo
+                self.socio_info = socio  # El socio es su propio socio
+                self.es_socio = True
+        
+        beneficiario_socio = BeneficiarioSocio(socio)
+        beneficiarios_unificados.append(beneficiario_socio)
+    
+    # Ordenar por nombre
+    beneficiarios_unificados.sort(key=lambda x: x.nombre)
+    
+    from datetime import datetime as dt
+    return render_template('admin/beneficiarios.html', 
+                         beneficiarios=beneficiarios_unificados, 
+                         search_query=search_query, 
+                         solo_ninos=solo_ninos,
+                         datetime=dt,
+                         timedelta=timedelta)
 
 @admin_bp.route('/socios/nuevo', methods=['GET', 'POST'])
 @login_required
@@ -209,6 +329,234 @@ def nuevo_socio():
     from datetime import datetime as dt
     return render_template('admin/nuevo_socio.html', datetime=dt)
 
+@admin_bp.route('/socios/<int:socio_id>/editar', methods=['GET', 'POST'])
+@login_required
+@directiva_required
+def editar_socio(socio_id):
+    socio = User.query.get_or_404(socio_id)
+    beneficiarios = Beneficiario.query.filter_by(socio_id=socio.id).order_by(Beneficiario.id).all()
+    
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        nombre = request.form.get('nombre', '').strip()
+        primer_apellido = request.form.get('primer_apellido', '').strip()
+        segundo_apellido = request.form.get('segundo_apellido', '').strip()
+        nombre_usuario = request.form.get('nombre_usuario', '').strip()
+        ano_nacimiento = request.form.get('ano_nacimiento', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        # Dirección
+        calle = request.form.get('calle', '').strip()
+        numero = request.form.get('numero', '').strip()
+        piso = request.form.get('piso', '').strip()
+        poblacion = request.form.get('poblacion', '').strip()
+        
+        # Validaciones básicas
+        if not all([nombre, primer_apellido, nombre_usuario, calle, numero, poblacion]):
+            flash('Todos los campos obligatorios deben estar completos.', 'error')
+            from datetime import datetime as dt
+            # Separar nombre completo en partes
+            partes_nombre = socio.nombre.split(' ', 2)
+            nombre_parts = {
+                'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+            }
+            return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+        
+        # Verificar si el nombre de usuario ya existe (excepto para el mismo socio)
+        usuario_existente = User.query.filter_by(nombre_usuario=nombre_usuario).first()
+        if usuario_existente and usuario_existente.id != socio.id:
+            flash('Ya existe un usuario con este nombre de usuario.', 'error')
+            from datetime import datetime as dt
+            partes_nombre = socio.nombre.split(' ', 2)
+            nombre_parts = {
+                'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+            }
+            return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+        
+        # Validar año de nacimiento
+        if ano_nacimiento:
+            try:
+                ano_nac = int(ano_nacimiento)
+                año_actual = datetime.now().year
+                if ano_nac < 1900 or ano_nac > año_actual:
+                    flash('El año de nacimiento debe estar entre 1900 y el año actual.', 'error')
+                    from datetime import datetime as dt
+                    partes_nombre = socio.nombre.split(' ', 2)
+                    nombre_parts = {
+                        'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                        'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                        'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+                    }
+                    return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+                fecha_nacimiento_obj = datetime(ano_nac, 1, 1).date()
+            except ValueError:
+                flash('Año de nacimiento inválido.', 'error')
+                from datetime import datetime as dt
+                partes_nombre = socio.nombre.split(' ', 2)
+                nombre_parts = {
+                    'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                    'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                    'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+                }
+                return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+        else:
+            fecha_nacimiento_obj = None
+            ano_nac = None
+        
+        # Convertir a mayúsculas y quitar acentos
+        nombre = quitar_acentos(nombre)
+        primer_apellido = quitar_acentos(primer_apellido)
+        if segundo_apellido:
+            segundo_apellido = quitar_acentos(segundo_apellido)
+        calle = quitar_acentos(calle.upper())
+        poblacion = quitar_acentos(poblacion.upper())
+        numero = numero.strip()
+        piso = piso.strip() if piso else None
+        
+        # Generar nombre completo
+        nombre_completo = f"{nombre} {primer_apellido}"
+        if segundo_apellido:
+            nombre_completo += f" {segundo_apellido}"
+        
+        # Actualizar datos del socio
+        socio.nombre = nombre_completo
+        socio.nombre_usuario = nombre_usuario
+        socio.ano_nacimiento = ano_nac
+        socio.fecha_nacimiento = fecha_nacimiento_obj
+        socio.calle = calle
+        socio.numero = numero
+        socio.piso = piso
+        socio.poblacion = poblacion
+        
+        # Actualizar contraseña si se proporciona
+        if password:
+            if len(password) < 6:
+                flash('La contraseña debe tener al menos 6 caracteres.', 'error')
+                from datetime import datetime as dt
+                partes_nombre = socio.nombre.split(' ', 2)
+                nombre_parts = {
+                    'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                    'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                    'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+                }
+                return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+            socio.set_password(password)
+            socio.password_plain = password  # Guardar en texto plano para mostrar a admin
+        
+        # Procesar beneficiarios
+        # Obtener todos los índices de beneficiarios del formulario (pueden no ser secuenciales)
+        beneficiarios_indices = set()
+        for key in request.form.keys():
+            if key.startswith('beneficiario_nombre_'):
+                # Extraer el índice del nombre del campo (ej: beneficiario_nombre_1 -> 1)
+                try:
+                    indice = int(key.replace('beneficiario_nombre_', ''))
+                    beneficiarios_indices.add(indice)
+                except ValueError:
+                    continue
+        
+        # Validar y preparar nuevos beneficiarios ANTES de eliminar los existentes
+        nuevos_beneficiarios = []
+        for i in sorted(beneficiarios_indices):
+            ben_nombre = request.form.get(f'beneficiario_nombre_{i}', '').strip()
+            ben_primer_apellido = request.form.get(f'beneficiario_primer_apellido_{i}', '').strip()
+            ben_segundo_apellido = request.form.get(f'beneficiario_segundo_apellido_{i}', '').strip()
+            ben_ano = request.form.get(f'beneficiario_ano_{i}', '').strip()
+            
+            # Validar que los campos obligatorios estén presentes
+            if not ben_nombre or not ben_primer_apellido or not ben_ano:
+                continue
+            
+            try:
+                ben_ano_nac = int(ben_ano)
+                año_actual = datetime.now().year
+                if ben_ano_nac < 1900 or ben_ano_nac > año_actual:
+                    continue
+                
+                # Convertir a mayúsculas
+                ben_nombre = quitar_acentos(ben_nombre)
+                ben_primer_apellido = quitar_acentos(ben_primer_apellido)
+                if ben_segundo_apellido:
+                    ben_segundo_apellido = quitar_acentos(ben_segundo_apellido)
+                
+                nuevos_beneficiarios.append({
+                    'nombre': ben_nombre,
+                    'primer_apellido': ben_primer_apellido,
+                    'segundo_apellido': ben_segundo_apellido if ben_segundo_apellido else None,
+                    'ano_nacimiento': ben_ano_nac,
+                    'indice': i
+                })
+            except ValueError:
+                continue
+        
+        # Ahora sí, eliminar beneficiarios existentes y crear los nuevos
+        for beneficiario in beneficiarios:
+            db.session.delete(beneficiario)
+        
+        # Crear los beneficiarios en la base de datos
+        for index, ben_data in enumerate(nuevos_beneficiarios, start=1):
+            # Generar número de beneficiario
+            numero_beneficiario = f"{socio.numero_socio}-{index}" if socio.numero_socio else None
+            
+            nuevo_beneficiario = Beneficiario(
+                socio_id=socio.id,
+                nombre=ben_data['nombre'],
+                primer_apellido=ben_data['primer_apellido'],
+                segundo_apellido=ben_data['segundo_apellido'],
+                ano_nacimiento=ben_data['ano_nacimiento'],
+                fecha_validez=socio.fecha_validez,
+                numero_beneficiario=numero_beneficiario
+            )
+            db.session.add(nuevo_beneficiario)
+        
+        try:
+            # Asegurarse de que todos los cambios estén en la sesión
+            db.session.add(socio)  # Asegurar que el socio esté en la sesión
+            
+            # Hacer flush para validar antes del commit
+            db.session.flush()
+            
+            # Commit de todos los cambios
+            db.session.commit()
+            
+            flash(f'Socio {nombre_completo} actualizado exitosamente.', 'success')
+            # Redirigir a la página de gestión de socios para evitar problemas de reenvío
+            return redirect(url_for('admin.gestion_socios'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar el socio: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+            import traceback
+            traceback.print_exc()
+            from datetime import datetime as dt
+            # Recargar beneficiarios originales en caso de error
+            beneficiarios_originales = Beneficiario.query.filter_by(socio_id=socio.id).order_by(Beneficiario.id).all()
+            partes_nombre = socio.nombre.split(' ', 2)
+            nombre_parts = {
+                'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+            }
+            return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios_originales, nombre_parts=nombre_parts, datetime=dt)
+    
+    from datetime import datetime as dt
+    # Separar nombre completo en partes
+    partes_nombre = socio.nombre.split(' ', 2)
+    nombre_parts = {
+        'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+        'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+        'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+    }
+    
+    return render_template('admin/editar_socio.html', 
+                         socio=socio, 
+                         beneficiarios=beneficiarios, 
+                         nombre_parts=nombre_parts,
+                         datetime=dt)
+
 @admin_bp.route('/socios/<int:socio_id>/renovar', methods=['GET', 'POST'])
 @login_required
 @directiva_required
@@ -218,10 +566,18 @@ def renovar_socio(socio_id):
     if request.method == 'POST':
         # Fecha de validez siempre al 31/12 del año en curso
         año_actual = datetime.now().year
-        socio.fecha_validez = datetime(año_actual, 12, 31, 23, 59, 59)
-        db.session.commit()
-        flash(f'Suscripción de {socio.nombre} renovada exitosamente hasta el 31/12/{año_actual}.', 'success')
-        return redirect(url_for('admin.gestion_socios'))
+        try:
+            socio.fecha_validez = datetime(año_actual, 12, 31, 23, 59, 59)
+            db.session.commit()
+            flash(f'Suscripción de {socio.nombre} renovada exitosamente hasta el 31/12/{año_actual}.', 'success')
+            return redirect(url_for('admin.gestion_socios'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al renovar la suscripción: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+            import traceback
+            traceback.print_exc()
+            from datetime import datetime as dt
+            return render_template('admin/renovar_socio.html', socio=socio, datetime=dt)
     
     from datetime import datetime as dt
     return render_template('admin/renovar_socio.html', socio=socio, datetime=dt)
@@ -302,11 +658,17 @@ def nueva_actividad():
             edad_maxima=edad_max
         )
         
-        db.session.add(nueva_actividad)
-        db.session.commit()
-        
-        flash(f'Actividad "{nombre}" creada exitosamente.', 'success')
-        return redirect(url_for('admin.gestion_actividades'))
+        try:
+            db.session.add(nueva_actividad)
+            db.session.commit()
+            flash(f'Actividad "{nombre}" creada exitosamente.', 'success')
+            return redirect(url_for('admin.gestion_actividades'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear la actividad: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+            import traceback
+            traceback.print_exc()
+            return render_template('admin/nueva_actividad.html')
     
     return render_template('admin/nueva_actividad.html')
 
@@ -352,9 +714,16 @@ def editar_actividad(actividad_id):
             flash('Fecha o edades inválidos.', 'error')
             return render_template('admin/editar_actividad.html', actividad=actividad)
         
-        db.session.commit()
-        flash(f'Actividad "{actividad.nombre}" actualizada exitosamente.', 'success')
-        return redirect(url_for('admin.gestion_actividades'))
+        try:
+            db.session.commit()
+            flash(f'Actividad "{actividad.nombre}" actualizada exitosamente.', 'success')
+            return redirect(url_for('admin.gestion_actividades'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar la actividad: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+            import traceback
+            traceback.print_exc()
+            return render_template('admin/editar_actividad.html', actividad=actividad)
     
     return render_template('admin/editar_actividad.html', actividad=actividad)
 
@@ -365,11 +734,17 @@ def eliminar_actividad(actividad_id):
     actividad = Actividad.query.get_or_404(actividad_id)
     nombre_actividad = actividad.nombre
     
-    db.session.delete(actividad)
-    db.session.commit()
-    
-    flash(f'Actividad "{nombre_actividad}" eliminada exitosamente.', 'success')
-    return redirect(url_for('admin.gestion_actividades'))
+    try:
+        db.session.delete(actividad)
+        db.session.commit()
+        flash(f'Actividad "{nombre_actividad}" eliminada exitosamente.', 'success')
+        return redirect(url_for('admin.gestion_actividades'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al eliminar la actividad: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for('admin.gestion_actividades'))
 
 @admin_bp.route('/actividades/pdf')
 @login_required
@@ -593,9 +968,11 @@ def ver_inscritos(actividad_id):
     actividad = Actividad.query.get_or_404(actividad_id)
     inscripciones = Inscripcion.query.filter_by(actividad_id=actividad_id).all()
     
+    from datetime import datetime as dt
     return render_template('admin/inscritos.html', 
                          actividad=actividad, 
-                         inscripciones=inscripciones)
+                         inscripciones=inscripciones,
+                         datetime=dt)
 
 @admin_bp.route('/actividades/<int:actividad_id>/marcar-asistencia/<int:inscripcion_id>', methods=['POST'])
 @login_required
@@ -609,10 +986,16 @@ def marcar_asistencia(actividad_id, inscripcion_id):
         return redirect(url_for('admin.ver_inscritos', actividad_id=actividad_id))
     
     # Cambiar el estado de asistencia
-    inscripcion.asiste = not inscripcion.asiste
-    db.session.commit()
-    
-    estado = "asistió" if inscripcion.asiste else "no asistió"
+    try:
+        inscripcion.asiste = not inscripcion.asiste
+        db.session.commit()
+        estado = "asistió" if inscripcion.asiste else "no asistió"
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar la asistencia: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for('admin.ver_inscritos', actividad_id=actividad_id))
     if inscripcion.beneficiario:
         nombre_mostrar = f"{inscripcion.beneficiario.nombre} {inscripcion.beneficiario.primer_apellido}"
     else:
@@ -729,6 +1112,7 @@ def editar_solicitud(solicitud_id):
             return redirect(url_for('admin.ver_solicitud', solicitud_id=solicitud_id))
         except Exception as e:
             db.session.rollback()
+            db.session.rollback()
             flash('Error al actualizar la solicitud. Por favor, inténtalo de nuevo.', 'error')
             return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
     
@@ -764,16 +1148,24 @@ def confirmar_solicitud(solicitud_id):
     if solicitud.segundo_apellido:
         nombre_completo += f" {solicitud.segundo_apellido}"
     
-    # Generar nombre de usuario: nombrenumero_de_socio (sin apellidos, sin guión bajo)
+    # Generar nombre de usuario: nombre + iniciales de los dos apellidos + año de nacimiento
     # Limpiar y normalizar nombre
     nombre_limpio = solicitud.nombre.lower().replace(' ', '').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u').replace('ñ', 'n')
-    nombre_usuario = f"{nombre_limpio}{numero_socio}"
+    
+    # Obtener iniciales de los apellidos
+    inicial_primer_apellido = solicitud.primer_apellido[0].lower() if solicitud.primer_apellido else ''
+    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else 'x'  # Si no hay segundo apellido, usar 'x'
+    
+    # Obtener año de nacimiento
+    ano_nacimiento = solicitud.fecha_nacimiento.year if solicitud.fecha_nacimiento else ''
+    
+    nombre_usuario = f"{nombre_limpio}{inicial_primer_apellido}{inicial_segundo_apellido}{ano_nacimiento}"
     
     # Verificar si el nombre de usuario ya existe y generar uno único
     contador = 1
     nombre_usuario_original = nombre_usuario
     while User.query.filter_by(nombre_usuario=nombre_usuario).first():
-        nombre_usuario = f"{nombre_limpio}{numero_socio}{contador}"
+        nombre_usuario = f"{nombre_limpio}{inicial_primer_apellido}{inicial_segundo_apellido}{ano_nacimiento}{contador}"
         contador += 1
     
     # Usar la contraseña de la solicitud
@@ -813,25 +1205,25 @@ def confirmar_solicitud(solicitud_id):
     solicitud.estado = 'activa'
     solicitud.fecha_confirmacion = datetime.utcnow()
     
-    db.session.add(nuevo_socio)
-    db.session.flush()  # Para obtener el ID del nuevo socio
-    
-    # Crear beneficiarios asociados al socio con números
-    beneficiarios_solicitud = BeneficiarioSolicitud.query.filter_by(solicitud_id=solicitud.id).all()
-    for index, beneficiario_solicitud in enumerate(beneficiarios_solicitud, start=1):
-        numero_beneficiario = f"{numero_socio}-{index}"  # Formato 0001-1, 0001-2, etc.
-        beneficiario = Beneficiario(
-            socio_id=nuevo_socio.id,
-            nombre=beneficiario_solicitud.nombre,
-            primer_apellido=beneficiario_solicitud.primer_apellido,
-            segundo_apellido=beneficiario_solicitud.segundo_apellido,
-            ano_nacimiento=beneficiario_solicitud.ano_nacimiento,
-            fecha_validez=fecha_validez,  # Misma fecha de vigencia que el socio
-            numero_beneficiario=numero_beneficiario
-        )
-        db.session.add(beneficiario)
-    
     try:
+        db.session.add(nuevo_socio)
+        db.session.flush()  # Para obtener el ID del nuevo socio
+        
+        # Crear beneficiarios asociados al socio con números
+        beneficiarios_solicitud = BeneficiarioSolicitud.query.filter_by(solicitud_id=solicitud.id).all()
+        for index, beneficiario_solicitud in enumerate(beneficiarios_solicitud, start=1):
+            numero_beneficiario = f"{numero_socio}-{index}"  # Formato 0001-1, 0001-2, etc.
+            beneficiario = Beneficiario(
+                socio_id=nuevo_socio.id,
+                nombre=beneficiario_solicitud.nombre,
+                primer_apellido=beneficiario_solicitud.primer_apellido,
+                segundo_apellido=beneficiario_solicitud.segundo_apellido,
+                ano_nacimiento=beneficiario_solicitud.ano_nacimiento,
+                fecha_validez=fecha_validez,  # Misma fecha de vigencia que el socio
+                numero_beneficiario=numero_beneficiario
+            )
+            db.session.add(beneficiario)
+        
         db.session.commit()
         beneficiarios_count = len(beneficiarios_solicitud)
         mensaje = f'Solicitud confirmada. Usuario creado: {nombre_usuario} (Número de socio: {numero_socio}) con contraseña: {password}'
@@ -1187,11 +1579,17 @@ def importar_datos():
                 flash(f'Error al importar solicitud: {str(e)}', 'warning')
                 continue
         
-        # Commit final
-        db.session.commit()
-        
-        flash(f'Importación completada: {usuarios_importados} usuarios, {actividades_importadas} actividades, {beneficiarios_importados} beneficiarios, {inscripciones_importadas} inscripciones, {solicitudes_importadas} solicitudes.', 'success')
-        return redirect(url_for('admin.dashboard'))
+        # Commit final con manejo de errores
+        try:
+            db.session.commit()
+            flash(f'Importación completada: {usuarios_importados} usuarios, {actividades_importadas} actividades, {beneficiarios_importados} beneficiarios, {inscripciones_importadas} inscripciones, {solicitudes_importadas} solicitudes.', 'success')
+            return redirect(url_for('admin.dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al guardar los datos importados: {str(e)}. Todos los cambios han sido revertidos.', 'error')
+            import traceback
+            traceback.print_exc()
+            return render_template('admin/importar_datos.html')
         
     except json.JSONDecodeError:
         flash('El archivo no es un JSON válido.', 'error')
@@ -1200,3 +1598,256 @@ def importar_datos():
         db.session.rollback()
         flash(f'Error al importar los datos: {str(e)}', 'error')
         return render_template('admin/importar_datos.html')
+
+@admin_bp.route('/descargar-base-datos', methods=['GET'])
+@login_required
+@directiva_required
+def descargar_base_datos():
+    """Descarga la base de datos completa (SQLite como .db, PostgreSQL como dump SQL)"""
+    try:
+        database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///asociacion.db')
+        fecha_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # SQLite - descargar archivo .db directamente
+        if 'sqlite' in database_url.lower():
+            db_path = database_url.replace('sqlite:///', '')
+            if not os.path.isabs(db_path):
+                # Ruta relativa, buscar en instance/
+                db_path = os.path.join(current_app.instance_path, db_path)
+            
+            if not os.path.exists(db_path):
+                flash('No se encontró el archivo de base de datos SQLite.', 'error')
+                return redirect(url_for('admin.dashboard'))
+            
+            # Leer el archivo y enviarlo
+            with open(db_path, 'rb') as f:
+                db_data = f.read()
+            
+            filename = f'backup_bd_completa_{fecha_str}.db'
+            output = BytesIO(db_data)
+            output.seek(0)
+            
+            return send_file(
+                output,
+                mimetype='application/x-sqlite3',
+                as_attachment=True,
+                download_name=filename
+            )
+        
+        # PostgreSQL - generar dump SQL
+        elif 'postgres' in database_url.lower():
+            # Extraer información de la URL
+            # Formato: postgresql://user:password@host:port/database
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(database_url)
+                
+                db_name = parsed.path.lstrip('/')
+                db_user = parsed.username
+                db_password = parsed.password
+                db_host = parsed.hostname
+                db_port = parsed.port or 5432
+                
+                # Generar dump usando pg_dump
+                filename = f'backup_bd_completa_{fecha_str}.sql'
+                
+                # Comando pg_dump
+                env = os.environ.copy()
+                env['PGPASSWORD'] = db_password
+                
+                cmd = [
+                    'pg_dump',
+                    '-h', db_host,
+                    '-p', str(db_port),
+                    '-U', db_user,
+                    '-d', db_name,
+                    '--no-owner',
+                    '--no-acl',
+                    '--clean',
+                    '--if-exists'
+                ]
+                
+                # Verificar si pg_dump está disponible
+                try:
+                    subprocess.run(['pg_dump', '--version'], capture_output=True, timeout=5)
+                except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+                    flash('pg_dump no está disponible en el sistema. La descarga de PostgreSQL requiere que pg_dump esté instalado.', 'error')
+                    return redirect(url_for('admin.dashboard'))
+                
+                # Ejecutar pg_dump
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                        timeout=300  # 5 minutos máximo
+                    )
+                except subprocess.TimeoutExpired:
+                    flash('La operación de dump tardó demasiado tiempo. Inténtalo de nuevo.', 'error')
+                    return redirect(url_for('admin.dashboard'))
+                except FileNotFoundError:
+                    flash('pg_dump no está disponible en el sistema. La descarga de PostgreSQL requiere que pg_dump esté instalado.', 'error')
+                    return redirect(url_for('admin.dashboard'))
+                
+                if result.returncode != 0:
+                    error_msg = result.stderr if result.stderr else 'Error desconocido al generar dump'
+                    flash(f'Error al generar dump de PostgreSQL: {error_msg}', 'error')
+                    return redirect(url_for('admin.dashboard'))
+                
+                # Crear archivo en memoria
+                output = BytesIO()
+                output.write(result.stdout.encode('utf-8'))
+                output.seek(0)
+                
+                return send_file(
+                    output,
+                    mimetype='application/sql',
+                    as_attachment=True,
+                    download_name=filename
+                )
+                
+            except Exception as e:
+                flash(f'Error al procesar la base de datos PostgreSQL: {str(e)}', 'error')
+                return redirect(url_for('admin.dashboard'))
+        
+        else:
+            flash('Tipo de base de datos no soportado para descarga completa.', 'error')
+            return redirect(url_for('admin.dashboard'))
+            
+    except Exception as e:
+        flash(f'Error al descargar la base de datos: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/restaurar-base-datos', methods=['GET', 'POST'])
+@login_required
+@directiva_required
+def restaurar_base_datos():
+    """Restaura la base de datos desde un archivo de backup"""
+    if request.method == 'GET':
+        return render_template('admin/restaurar_base_datos.html')
+    
+    # Verificar confirmación
+    confirmacion = request.form.get('confirmacion', '').strip()
+    if confirmacion != 'RESTAURAR':
+        flash('Debes escribir "RESTAURAR" en mayúsculas para confirmar la operación.', 'error')
+        return render_template('admin/restaurar_base_datos.html')
+    
+    if 'archivo' not in request.files:
+        flash('No se ha seleccionado ningún archivo.', 'error')
+        return render_template('admin/restaurar_base_datos.html')
+    
+    archivo = request.files['archivo']
+    if archivo.filename == '':
+        flash('No se ha seleccionado ningún archivo.', 'error')
+        return render_template('admin/restaurar_base_datos.html')
+    
+    try:
+        database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///asociacion.db')
+        
+        # SQLite - restaurar desde archivo .db
+        if 'sqlite' in database_url.lower():
+            db_path = database_url.replace('sqlite:///', '')
+            if not os.path.isabs(db_path):
+                db_path = os.path.join(current_app.instance_path, db_path)
+            
+            # Leer el archivo subido
+            archivo_data = archivo.read()
+            
+            # Hacer backup del archivo actual antes de restaurar
+            if os.path.exists(db_path):
+                backup_actual = f"{db_path}.backup_antes_restauracion_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                shutil.copy2(db_path, backup_actual)
+                flash(f'Se creó un backup del archivo actual en: {backup_actual}', 'info')
+            
+            # Escribir el nuevo archivo
+            with open(db_path, 'wb') as f:
+                f.write(archivo_data)
+            
+            # Reiniciar conexiones de SQLAlchemy
+            db.session.close_all()
+            db.engine.dispose()
+            
+            flash('Base de datos SQLite restaurada exitosamente. La aplicación se reiniciará.', 'success')
+            return redirect(url_for('admin.dashboard'))
+        
+        # PostgreSQL - restaurar desde dump SQL
+        elif 'postgres' in database_url.lower():
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(database_url)
+                
+                db_name = parsed.path.lstrip('/')
+                db_user = parsed.username
+                db_password = parsed.password
+                db_host = parsed.hostname
+                db_port = parsed.port or 5432
+                
+                # Leer el contenido del archivo SQL
+                contenido_sql = archivo.read().decode('utf-8')
+                
+                # Verificar si psql está disponible
+                try:
+                    subprocess.run(['psql', '--version'], capture_output=True, timeout=5)
+                except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+                    flash('psql no está disponible en el sistema. La restauración de PostgreSQL requiere que psql esté instalado.', 'error')
+                    return render_template('admin/restaurar_base_datos.html')
+                
+                # Ejecutar el dump usando psql
+                env = os.environ.copy()
+                env['PGPASSWORD'] = db_password
+                
+                cmd = [
+                    'psql',
+                    '-h', db_host,
+                    '-p', str(db_port),
+                    '-U', db_user,
+                    '-d', db_name,
+                    '-f', '-'  # Leer desde stdin
+                ]
+                
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        input=contenido_sql,
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                        timeout=600  # 10 minutos máximo
+                    )
+                except subprocess.TimeoutExpired:
+                    flash('La operación de restauración tardó demasiado tiempo. Inténtalo de nuevo.', 'error')
+                    return render_template('admin/restaurar_base_datos.html')
+                except FileNotFoundError:
+                    flash('psql no está disponible en el sistema. La restauración de PostgreSQL requiere que psql esté instalado.', 'error')
+                    return render_template('admin/restaurar_base_datos.html')
+                
+                if result.returncode != 0:
+                    error_msg = result.stderr if result.stderr else 'Error desconocido al restaurar'
+                    flash(f'Error al restaurar PostgreSQL: {error_msg}', 'error')
+                    return render_template('admin/restaurar_base_datos.html')
+                
+                # Reiniciar conexiones de SQLAlchemy
+                db.session.close_all()
+                db.engine.dispose()
+                
+                flash('Base de datos PostgreSQL restaurada exitosamente.', 'success')
+                return redirect(url_for('admin.dashboard'))
+                
+            except Exception as e:
+                flash(f'Error al restaurar PostgreSQL: {str(e)}', 'error')
+                import traceback
+                traceback.print_exc()
+                return render_template('admin/restaurar_base_datos.html')
+        
+        else:
+            flash('Tipo de base de datos no soportado para restauración.', 'error')
+            return render_template('admin/restaurar_base_datos.html')
+            
+    except Exception as e:
+        flash(f'Error al restaurar la base de datos: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+        return render_template('admin/restaurar_base_datos.html')

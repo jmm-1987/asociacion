@@ -46,13 +46,25 @@
                                     <tr>
                                         <td>
                                             {% if inscripcion.beneficiario %}
+                                                {% set año_actual = datetime.now().year %}
+                                                {% set edad_benef = año_actual - inscripcion.beneficiario.ano_nacimiento %}
                                                 <strong>{{ inscripcion.beneficiario.nombre }} {{ inscripcion.beneficiario.primer_apellido }}{% if inscripcion.beneficiario.segundo_apellido %} {{ inscripcion.beneficiario.segundo_apellido }}{% endif %}</strong>
+                                                {% if edad_benef < 18 %}
+                                                    <i class="bi bi-emoji-smile text-warning ms-1" title="Niño"></i>
+                                                {% endif %}
                                                 <br><small class="text-success">Beneficiario de {{ inscripcion.usuario.nombre }}</small>
                                                 {% if inscripcion.beneficiario.numero_beneficiario %}
                                                     <br><small class="text-muted">Nº: <strong>{{ inscripcion.beneficiario.numero_beneficiario }}</strong></small>
                                                 {% endif %}
                                             {% else %}
+                                                {% set año_actual = datetime.now().year %}
+                                                {% if inscripcion.usuario.ano_nacimiento %}
+                                                    {% set edad_socio = año_actual - inscripcion.usuario.ano_nacimiento %}
+                                                {% endif %}
                                                 <strong>{{ inscripcion.usuario.nombre }}</strong>
+                                                {% if inscripcion.usuario.ano_nacimiento and edad_socio < 18 %}
+                                                    <i class="bi bi-emoji-smile text-warning ms-1" title="Niño"></i>
+                                                {% endif %}
                                                 {% if inscripcion.usuario.numero_socio %}
                                                     <br><small class="text-muted">Nº Socio: <strong>{{ inscripcion.usuario.numero_socio }}</strong></small>
                                                 {% endif %}

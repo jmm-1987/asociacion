@@ -123,11 +123,11 @@
                                     <div id="info-pago" style="display: none;" class="mt-3 p-3 border rounded bg-light">
                                         <div id="info-bizum" style="display: none;">
                                             <strong><i class="bi bi-phone me-2"></i>Realiza el Bizum de 20€ al número:</strong>
-                                            <p class="mb-0 mt-2 fs-5 fw-bold text-primary">612 345 678</p>
+                                            <p class="mb-0 mt-2 fs-5 fw-bold text-primary">614 66 53 54</p>
                                         </div>
                                         <div id="info-transferencia" style="display: none;">
                                             <strong><i class="bi bi-bank me-2"></i>Realiza la transferencia de 20€ a la cuenta:</strong>
-                                            <p class="mb-0 mt-2 fs-5 fw-bold text-primary">ES12 3456 7890 1234 5678 9012</p>
+                                            <p class="mb-0 mt-2 fs-5 fw-bold text-primary">ES90 0078 0020 0440 0001 4737</p>
                                         </div>
                                     </div>
                                 </div>
@@ -335,6 +335,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('formSolicitud');
     if (form) {
         form.addEventListener('submit', function(e) {
+            // Debug: verificar campos de beneficiarios antes de enviar
+            const camposBeneficiarios = form.querySelectorAll('input[name^="beneficiario_"]');
+            console.log(`[DEBUG] Campos de beneficiarios antes de enviar: ${camposBeneficiarios.length}`);
+            
+            // También buscar en todo el documento por si acaso
+            const todosLosCamposBeneficiarios = document.querySelectorAll('input[name^="beneficiario_"]');
+            console.log(`[DEBUG] Total campos beneficiarios en documento: ${todosLosCamposBeneficiarios.length}`);
+            
+            if (camposBeneficiarios.length === 0 && todosLosCamposBeneficiarios.length > 0) {
+                console.error('[ERROR] Los campos de beneficiarios NO están dentro del formulario!');
+                // Intentar moverlos al formulario
+                todosLosCamposBeneficiarios.forEach(function(campo) {
+                    if (!form.contains(campo)) {
+                        console.log(`[INFO] Moviendo campo ${campo.name} al formulario`);
+                        form.appendChild(campo);
+                    }
+                });
+            }
+            
+            camposBeneficiarios.forEach(function(campo) {
+                console.log(`[DEBUG] Campo: ${campo.name} = "${campo.value}"`);
+            });
+            
             // Limpiar espacios de todos los campos de texto
             const todosLosCampos = form.querySelectorAll('input[type="text"], input[type="tel"], input[type="number"]');
             todosLosCampos.forEach(function(campo) {
@@ -347,11 +370,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Las contraseñas no coinciden. Por favor, verifica que ambas contraseñas sean iguales.');
                 return false;
             }
+            
+            // Asegurarse de que el contenedor de beneficiarios esté visible si hay beneficiarios
+            const miembrosInputCheck = document.getElementById('miembros_unidad_familiar');
+            if (miembrosInputCheck) {
+                const miembros = parseInt(miembrosInputCheck.value) || 0;
+                const beneficiariosEsperados = Math.max(0, miembros - 1);
+                if (beneficiariosEsperados > 0) {
+                    const beneficiariosContainer = document.getElementById('beneficiarios-container');
+                    if (beneficiariosContainer) {
+                        beneficiariosContainer.style.display = 'block';
+                    }
+                }
+            }
+            
+            // Validación simple de beneficiarios - solo verificar que los campos requeridos tengan el atributo required
+            // Dejamos que la validación HTML5 nativa y el backend hagan la validación real
+            // Esto solo asegura que el contenedor esté visible
+            const miembrosInput = document.getElementById('miembros_unidad_familiar');
+            if (miembrosInput) {
+                const miembros = parseInt(miembrosInput.value) || 0;
+                const beneficiariosEsperados = Math.max(0, miembros - 1);
+                
+                if (beneficiariosEsperados > 0) {
+                    const beneficiariosContainer = document.getElementById('beneficiarios-container');
+                    if (beneficiariosContainer) {
+                        beneficiariosContainer.style.display = 'block';
+                    }
+                }
+            }
         });
     }
     
     // Función para generar campos de beneficiario
     function generarCamposBeneficiario(index) {
+        const añoActual = new Date().getFullYear();
         return `
             <div class="beneficiario-item mb-4 p-3 border rounded" data-index="${index}">
                 <h6 class="mb-3 text-success">
@@ -360,42 +413,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 </h6>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">
+                        <label for="beneficiario_nombre_${index}" class="form-label fw-bold">
                             <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
                         </label>
                         <input type="text" class="form-control beneficiario-nombre" 
+                               id="beneficiario_nombre_${index}"
                                name="beneficiario_nombre_${index}" 
-                               required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               form="formSolicitud"
+                               required 
+                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
                                title="Solo letras y espacios">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">
+                        <label for="beneficiario_primer_apellido_${index}" class="form-label fw-bold">
                             <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
                         </label>
                         <input type="text" class="form-control beneficiario-primer-apellido" 
+                               id="beneficiario_primer_apellido_${index}"
                                name="beneficiario_primer_apellido_${index}" 
-                               required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                               form="formSolicitud"
+                               required 
+                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
                                title="Solo letras y espacios">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">
+                        <label for="beneficiario_segundo_apellido_${index}" class="form-label fw-bold">
                             <i class="bi bi-person me-1"></i>Segundo Apellido
                         </label>
                         <input type="text" class="form-control beneficiario-segundo-apellido" 
+                               id="beneficiario_segundo_apellido_${index}"
                                name="beneficiario_segundo_apellido_${index}" 
+                               form="formSolicitud"
                                pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
                                title="Solo letras y espacios">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">
+                        <label for="beneficiario_ano_${index}" class="form-label fw-bold">
                             <i class="bi bi-calendar me-1"></i>Año de Nacimiento <span class="text-danger">*</span>
                         </label>
                         <input type="number" class="form-control beneficiario-ano" 
+                               id="beneficiario_ano_${index}"
                                name="beneficiario_ano_${index}" 
-                               required min="1900" max="${new Date().getFullYear()}" 
-                               title="Año válido">
+                               form="formSolicitud"
+                               required 
+                               min="1900" 
+                               max="${añoActual}" 
+                               title="Año válido entre 1900 y ${añoActual}">
                     </div>
                 </div>
             </div>
@@ -418,10 +483,45 @@ document.addEventListener('DOMContentLoaded', function() {
             // Preservar el texto explicativo si existe
             const textoExplicativo = body.querySelector('.alert-info');
             const textoHTML = textoExplicativo ? textoExplicativo.outerHTML : '';
-            body.innerHTML = textoHTML;
             
+            // Limpiar el contenido excepto el texto explicativo
+            // Primero, eliminar todos los campos de beneficiarios existentes
+            const camposExistentes = body.querySelectorAll('.beneficiario-item');
+            camposExistentes.forEach(function(campo) {
+                campo.remove();
+            });
+            
+            // Si no hay texto explicativo, añadirlo
+            if (!body.querySelector('.alert-info')) {
+                body.innerHTML = textoHTML;
+            }
+            
+            // Crear y añadir los campos de beneficiarios directamente al body
             for (let i = 1; i <= beneficiarios; i++) {
-                body.innerHTML += generarCamposBeneficiario(i);
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = generarCamposBeneficiario(i);
+                // Mover todos los elementos del tempDiv al body uno por uno
+                while (tempDiv.firstChild) {
+                    body.appendChild(tempDiv.firstChild);
+                }
+            }
+            
+            // Verificar que los campos se añadieron correctamente
+            const camposGenerados = body.querySelectorAll('input[name^="beneficiario_"]');
+            console.log(`[DEBUG] Campos de beneficiarios generados: ${camposGenerados.length}`);
+            
+            // Verificar que los campos están dentro del formulario y añadir atributo form si es necesario
+            const formCheck = document.getElementById('formSolicitud');
+            if (formCheck) {
+                // Asegurar que todos los campos tengan el atributo form apuntando al formulario
+                camposGenerados.forEach(function(campo) {
+                    // Añadir el atributo form para asegurar que se envíen con el formulario
+                    campo.setAttribute('form', 'formSolicitud');
+                    console.log(`[DEBUG] Campo ${campo.name} configurado con form="formSolicitud"`);
+                });
+                
+                const camposEnForm = formCheck.querySelectorAll('input[name^="beneficiario_"]');
+                console.log(`[DEBUG] Campos dentro del formulario después de añadir: ${camposEnForm.length}`);
             }
             
             // Aplicar conversión a mayúsculas y limpieza de espacios a los nuevos campos
@@ -464,9 +564,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (miembrosInput) {
         miembrosInput.addEventListener('input', actualizarBeneficiarios);
         miembrosInput.addEventListener('change', actualizarBeneficiarios);
-        // Ejecutar al cargar si ya hay un valor
+        // Ejecutar al cargar si ya hay un valor (con un pequeño delay para asegurar que el DOM esté listo)
         if (miembrosInput.value) {
-            actualizarBeneficiarios();
+            setTimeout(function() {
+                actualizarBeneficiarios();
+            }, 100);
+        }
+    }
+    
+    // También ejecutar cuando el DOM esté completamente cargado
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            const miembrosInputCheck = document.getElementById('miembros_unidad_familiar');
+            if (miembrosInputCheck && miembrosInputCheck.value) {
+                setTimeout(function() {
+                    actualizarBeneficiarios();
+                }, 200);
+            }
+        });
+    } else {
+        // DOM ya está cargado
+        const miembrosInputCheck = document.getElementById('miembros_unidad_familiar');
+        if (miembrosInputCheck && miembrosInputCheck.value) {
+            setTimeout(function() {
+                actualizarBeneficiarios();
+            }, 200);
         }
     }
     

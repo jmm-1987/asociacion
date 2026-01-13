@@ -1,6 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Iniciar Sesión - Asociación de Vecinos de Montealto{% endblock %}
+{% block title %}Asociación de Vecinos de Montealto de Mérida - Inicio{% endblock %}
+
+{% block head %}
+<meta name="description" content="Asociación de Vecinos de Montealto de Mérida. Gestiona actividades, eventos y mantente conectado con tu comunidad. Hazte socio y participa en nuestras actividades comunitarias.">
+<meta name="keywords" content="asociación vecinos, Montealto, Mérida, comunidad, actividades, eventos, barrio, vecinos Mérida">
+<meta name="author" content="Asociación de Vecinos de Montealto">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Asociación de Vecinos de Montealto de Mérida">
+<meta property="og:description" content="Asociación de Vecinos de Montealto de Mérida. Gestiona actividades, eventos y mantente conectado con tu comunidad.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<link rel="canonical" href="{{ url_for('auth.login', _external=True) }}">
+{% endblock %}
 
 {% block scripts %}
 <script>
@@ -428,8 +440,12 @@
             </div>
             <div class="card-body">
                 <p class="card-text">
-                    La Asociación de Vecinos de Montealto es una organización sin ánimo de lucro que tiene como objetivo 
-                    mejorar la calidad de vida de todos los residentes de nuestra comunidad.
+                    La <strong>Asociación de Vecinos de Montealto de Mérida</strong> es una organización sin ánimo de lucro que tiene como objetivo 
+                    mejorar la calidad de vida de todos los residentes de nuestra comunidad en el barrio de Montealto, Mérida, Badajoz, Extremadura.
+                </p>
+                <p class="card-text">
+                    Trabajamos para fomentar la participación ciudadana, organizar actividades culturales y recreativas, 
+                    y defender los intereses de todos los vecinos del barrio de Montealto en Mérida.
                 </p>
                 <h5 class="mt-4 mb-3">
                     <i class="bi bi-star-fill text-warning me-2"></i>
@@ -530,595 +546,60 @@
                 <div class="tab-content" id="empresasTabContent">
                     <!-- Pestaña: Comida y Restaurantes -->
                     <div class="tab-pane fade show active" id="comida" role="tabpanel">
-                        <div class="row g-4">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/bar los segovianos.jpg') }}" alt="Bar Los Segovianos" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Bar Los Segovianos</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@segovianos.com">info@segovianos.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345682">612 345 682</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345682" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/bar rialto rrss.jpg') }}" alt="Bar Rialto" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Bar Rialto</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@rialto.com">info@rialto.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345684">612 345 684</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345684" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/cerveceria pradan.jpg') }}" alt="Cervecería Pradan" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Cervecería Pradan</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@pradan.com">info@pradan.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345683">612 345 683</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345683" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/la mejilloneria - restaurante teatro.jpg') }}" alt="La Mejillonería - Restaurante Teatro" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">La Mejillonería - Restaurante Teatro</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@mejilloneria.com">info@mejilloneria.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345685">612 345 685</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345685" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/restaurante nirri.jpg') }}" alt="Restaurante Nirri" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Restaurante Nirri</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@nirri.com">info@nirri.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345686">612 345 686</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345686" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/sabor brasas y leña.jpg') }}" alt="Sabor Brasas y Leña" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Sabor Brasas y Leña</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@saborbrasas.com">info@saborbrasas.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345687">612 345 687</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345687" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/meson castellano.jpg') }}" alt="Mesón Castellano" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Mesón Castellano</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@mesoncastellano.com">info@mesoncastellano.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345688">612 345 688</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345688" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/amantes de la comida portuguesa.jpg') }}" alt="Amantes de la Comida Portuguesa" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Amantes de la Comida Portuguesa</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@comidaportuguesa.com">info@comidaportuguesa.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345689">612 345 689</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345689" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/el capricho de Carmen.jpg') }}" alt="El Capricho de Carmen" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">El Capricho de Carmen</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@caprichocarmen.com">info@caprichocarmen.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345690">612 345 690</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345690" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/berlin 1989.jpg') }}" alt="Berlin 1989" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Berlin 1989</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@berlin1989.com">info@berlin1989.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345691">612 345 691</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345691" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="text-center py-5">
+                            <div class="alert alert-info border-0 shadow-sm" style="font-size: 1.25rem;">
+                                <i class="bi bi-megaphone-fill me-2"></i>
+                                <strong>Promocionate aquí por solo 50€ anuales</strong>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Pestaña: Pollos Asados -->
                     <div class="tab-pane fade" id="pollos" role="tabpanel">
-                        <div class="row g-4">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/asador de pollos el kikiriki.jpg') }}" alt="Asador de Pollos El Kikiriki" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Asador de Pollos El Kikiriki</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@kikiriki.com">info@kikiriki.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345680">612 345 680</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345680" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/el palacio del pollo.jpg') }}" alt="El Palacio del Pollo" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">El Palacio del Pollo</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@palaciodelpollo.com">info@palaciodelpollo.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345692">612 345 692</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345692" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="text-center py-5">
+                            <div class="alert alert-info border-0 shadow-sm" style="font-size: 1.25rem;">
+                                <i class="bi bi-megaphone-fill me-2"></i>
+                                <strong>Promocionate aquí por solo 50€ anuales</strong>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Pestaña: Servicios (Electricidad, Fontanería, Carpintería) -->
                     <div class="tab-pane fade" id="servicios" role="tabpanel">
-                        <div class="row g-4">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/losada electricidad.jpg') }}" alt="Losada Electricidad" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Losada Electricidad</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@losadaelectricidad.com">info@losadaelectricidad.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345693">612 345 693</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345693" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/HIDRAVAL.jpg') }}" alt="HIDRAVAL" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">HIDRAVAL</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@hidraval.com">info@hidraval.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345694">612 345 694</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345694" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/Carpinteria Domingo Garcia.jpg') }}" alt="Carpintería Domingo García" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Carpintería Domingo García</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@carpinteriadomingo.com">info@carpinteriadomingo.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345695">612 345 695</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345695" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/vipa carpinteria.jpg') }}" alt="VIPA Carpintería" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">VIPA Carpintería</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@vipacarpinteria.com">info@vipacarpinteria.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345696">612 345 696</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345696" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="text-center py-5">
+                            <div class="alert alert-info border-0 shadow-sm" style="font-size: 1.25rem;">
+                                <i class="bi bi-megaphone-fill me-2"></i>
+                                <strong>Promocionate aquí por solo 50€ anuales</strong>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Pestaña: Automoción -->
                     <div class="tab-pane fade" id="automocion" role="tabpanel">
-                        <div class="row g-4">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/autoescuela martin.jpg') }}" alt="Autoescuela Martín" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Autoescuela Martín</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@autoescuelamartin.com">info@autoescuelamartin.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345681">612 345 681</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345681" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/lvdica automocion.jpg') }}" alt="LVDICA Automoción" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">LVDICA Automoción</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@lvdica.com">info@lvdica.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345697">612 345 697</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345697" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/Mérida automoción .jpg') }}" alt="Mérida Automoción" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Mérida Automoción</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@meridaautomocion.com">info@meridaautomocion.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345698">612 345 698</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345698" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/rm recambios y automicion.jpg') }}" alt="RM Recambios y Automoción" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">RM Recambios y Automoción</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@rmrecambios.com">info@rmrecambios.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345699">612 345 699</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345699" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/logo_rm.webp') }}" alt="RM Recambios" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">RM Recambios</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@rm.com">info@rm.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345700">612 345 700</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345700" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/talleres navas motor.jpg') }}" alt="Talleres Navas Motor" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Talleres Navas Motor</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@navasmotor.com">info@navasmotor.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345701">612 345 701</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345701" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/metal tyres.jpg') }}" alt="Metal Tyres" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Metal Tyres</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@metaltyres.com">info@metaltyres.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345702">612 345 702</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345702" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="text-center py-5">
+                            <div class="alert alert-info border-0 shadow-sm" style="font-size: 1.25rem;">
+                                <i class="bi bi-megaphone-fill me-2"></i>
+                                <strong>Promocionate aquí por solo 50€ anuales</strong>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Pestaña: Educación -->
                     <div class="tab-pane fade" id="educacion" role="tabpanel">
-                        <div class="row g-4">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/acuarela centro de educacion infantil.jpg') }}" alt="Acuarela Centro de Educación Infantil" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Acuarela Centro de Educación Infantil</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@acuarela.com">info@acuarela.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345678">612 345 678</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345678" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/la tribu montessori.jpg') }}" alt="La Tribu Montessori" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">La Tribu Montessori</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@tribumontessori.com">info@tribumontessori.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345703">612 345 703</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345703" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="text-center py-5">
+                            <div class="alert alert-info border-0 shadow-sm" style="font-size: 1.25rem;">
+                                <i class="bi bi-megaphone-fill me-2"></i>
+                                <strong>Promocionate aquí por solo 50€ anuales</strong>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Pestaña: Otros -->
                     <div class="tab-pane fade" id="otros" role="tabpanel">
-                        <div class="row g-4">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/floristeria aralia .jpg') }}" alt="Floristería Aralia" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Floristería Aralia</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@aralia.com">info@aralia.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345704">612 345 704</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345704" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/carnicería Carmona.jpeg') }}" alt="Carnicería Carmona" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Carnicería Carmona</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@carniceriacarmona.com">info@carniceriacarmona.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345705">612 345 705</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345705" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/Marta Álvarez  abogada.jpg') }}" alt="Marta Álvarez Abogada" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Marta Álvarez Abogada</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@martaalvarez.com">info@martaalvarez.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345706">612 345 706</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345706" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/jose maria manzano centro de fisioterapia.jpg') }}" alt="José María Manzano Centro de Fisioterapia" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">José María Manzano Centro de Fisioterapia</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@fisioterapiamanzano.com">info@fisioterapiamanzano.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345707">612 345 707</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345707" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/Blanco fotografos .jpg') }}" alt="Blanco Fotógrafos" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Blanco Fotógrafos</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@blancofotografos.com">info@blancofotografos.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345708">612 345 708</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345708" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/inmobiliaria metro cuadrado.png') }}" alt="Inmobiliaria Metro Cuadrado" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Inmobiliaria Metro Cuadrado</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@metroduadrado.com">info@metroduadrado.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345709">612 345 709</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345709" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/Mérida menaje.jpg') }}" alt="Mérida Menaje" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Mérida Menaje</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@meridamenaje.com">info@meridamenaje.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345710">612 345 710</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345710" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/deluxe hotels suites.jpg') }}" alt="Deluxe Hotels Suites" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Deluxe Hotels Suites</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@deluxehotels.com">info@deluxehotels.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345711">612 345 711</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345711" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/ecobox modular.jpg') }}" alt="Ecobox Modular" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Ecobox Modular</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@ecobox.com">info@ecobox.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345712">612 345 712</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345712" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/solarcheck.jpg') }}" alt="Solarcheck" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Solarcheck</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@solarcheck.com">info@solarcheck.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345713">612 345 713</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345713" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/pilates asociacion.jpg') }}" alt="Pilates Asociación" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Pilates Asociación</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@pilates.com">info@pilates.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345714">612 345 714</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345714" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/Yoga asociacion .jpg') }}" alt="Yoga Asociación" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Yoga Asociación</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@yoga.com">info@yoga.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345715">612 345 715</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345715" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/aloha.jpg') }}" alt="Aloha" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Aloha</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@aloha.com">info@aloha.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345679">612 345 679</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345679" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/ayuva.jpg') }}" alt="Ayuva" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Ayuva</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@ayuva.com">info@ayuva.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345716">612 345 716</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345716" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/Azimut.jpg') }}" alt="Azimut" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Azimut</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@azimut.com">info@azimut.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345717">612 345 717</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345717" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/jd salete.jpg') }}" alt="JD Salete" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">JD Salete</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@jdsalete.com">info@jdsalete.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345718">612 345 718</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345718" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/Cascaras .jpg') }}" alt="Cáscaras" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">Cáscaras</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@cascaras.com">info@cascaras.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345719">612 345 719</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345719" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 empresa-card">
-                                    <div class="card-body text-center">
-                                        <img src="{{ url_for('static', filename='patrocinadores/HYR.jpg') }}" alt="HYR" class="img-fluid mb-3 empresa-logo">
-                                        <h6 class="fw-bold">HYR</h6>
-                                        <div class="empresa-contacto mt-3">
-                                            <p class="mb-1"><i class="bi bi-envelope me-2"></i><a href="mailto:info@hyr.com">info@hyr.com</a></p>
-                                            <p class="mb-1"><i class="bi bi-telephone me-2"></i><a href="tel:+34612345720">612 345 720</a></p>
-                                            <p class="mb-0"><i class="bi bi-whatsapp me-2"></i><a href="https://wa.me/34612345720" target="_blank">WhatsApp</a></p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="text-center py-5">
+                            <div class="alert alert-info border-0 shadow-sm" style="font-size: 1.25rem;">
+                                <i class="bi bi-megaphone-fill me-2"></i>
+                                <strong>Promocionate aquí por solo 50€ anuales</strong>
                             </div>
                         </div>
                     </div>

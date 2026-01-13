@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AV Montealto{% endblock %}</title>
+    {% block head %}{% endblock %}
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -36,6 +37,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('admin.gestion_socios') }}">
                                 <i class="bi bi-people me-1"></i>Socios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.gestion_beneficiarios') }}">
+                                <i class="bi bi-people-fill me-1"></i>Beneficiarios
                             </a>
                         </li>
                         <li class="nav-item">
@@ -79,12 +85,20 @@
                             <i class="bi bi-gear-fill me-1"></i>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><h6 class="dropdown-header">Gestión de Datos</h6></li>
+                            <li><h6 class="dropdown-header">Gestión de Datos (JSON)</h6></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.exportar_datos') }}">
-                                <i class="bi bi-download me-2"></i>Exportar Base de Datos
+                                <i class="bi bi-download me-2"></i>Exportar Datos (JSON)
                             </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.importar_datos') }}">
-                                <i class="bi bi-upload me-2"></i>Importar Base de Datos
+                                <i class="bi bi-upload me-2"></i>Importar Datos (JSON)
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Base de Datos Completa</h6></li>
+                            <li><a class="dropdown-item text-primary" href="{{ url_for('admin.descargar_base_datos') }}">
+                                <i class="bi bi-database-fill-down me-2"></i>Descargar BD Completa
+                            </a></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('admin.restaurar_base_datos') }}">
+                                <i class="bi bi-database-fill-up me-2"></i>Restaurar BD Completa
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                         </ul>

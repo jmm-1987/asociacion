@@ -51,14 +51,22 @@
                         {% endif %}
                     </p>
                     {% if solicitud.forma_de_pago == 'bizum' %}
-                    <p class="mb-0">
+                    <p class="mb-2">
                         <strong>Realiza el Bizum al número:</strong>
                         <span class="fs-5 fw-bold text-primary ms-2">{{ numero_bizum }}</span>
                     </p>
-                    {% elif solicitud.forma_de_pago == 'transferencia' %}
                     <p class="mb-0">
+                        <strong>Concepto:</strong>
+                        <span class="fs-5 fw-bold text-primary ms-2">{{ nombre_usuario }}</span>
+                    </p>
+                    {% elif solicitud.forma_de_pago == 'transferencia' %}
+                    <p class="mb-2">
                         <strong>Realiza la transferencia a la cuenta:</strong>
                         <span class="fs-5 fw-bold text-primary ms-2">{{ numero_cuenta }}</span>
+                    </p>
+                    <p class="mb-0">
+                        <strong>Concepto:</strong>
+                        <span class="fs-5 fw-bold text-primary ms-2">{{ nombre_usuario }}</span>
                     </p>
                     {% elif solicitud.forma_de_pago == 'contado' %}
                     <p class="mb-0">

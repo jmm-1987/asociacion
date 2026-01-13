@@ -221,7 +221,7 @@ def logout():
     
     logout_user()
     flash('Has cerrado sesión correctamente.', 'info')
-    return redirect(url_for('auth.acceso_socios'))
+    return redirect(url_for('auth.login'))
 
 @auth_bp.route('/hazte-socio', methods=['GET', 'POST'])
 def hazte_socio():
@@ -244,7 +244,9 @@ def hazte_socio():
         # Validaciones
         if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, password_confirm, ano_nacimiento, calle, numero, poblacion]):
             flash('Todos los campos obligatorios deben estar completos.', 'error')
-            return render_template('auth/hazte_socio.html')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         # Validar año de nacimiento
         try:
@@ -252,26 +254,36 @@ def hazte_socio():
             año_actual = datetime.now().year
             if ano_nac < 1900 or ano_nac > año_actual:
                 flash('El año de nacimiento debe estar entre 1900 y el año actual.', 'error')
-                return render_template('auth/hazte_socio.html')
+                from datetime import datetime as dt
+                año_actual = datetime.now().year
+                return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
             # Crear fecha de nacimiento usando el 1 de enero del año indicado
             fecha_nacimiento_obj = datetime(ano_nac, 1, 1).date()
         except ValueError:
             flash('Año de nacimiento inválido.', 'error')
-            return render_template('auth/hazte_socio.html')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         # Validar contraseñas
         if len(password) < 6:
             flash('La contraseña debe tener al menos 6 caracteres.', 'error')
-            return render_template('auth/hazte_socio.html')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         if password != password_confirm:
             flash('Las contraseñas no coinciden.', 'error')
-            return render_template('auth/hazte_socio.html')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         # Validar forma de pago
         if forma_de_pago not in ['bizum', 'transferencia']:
             flash('Forma de pago inválida.', 'error')
-            return render_template('auth/hazte_socio.html')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         # Validar miembros_unidad_familiar (debe ser numérico)
         try:
@@ -280,7 +292,9 @@ def hazte_socio():
                 raise ValueError()
         except ValueError:
             flash('El número de miembros de la unidad familiar debe ser un número positivo.', 'error')
-            return render_template('auth/hazte_socio.html')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         # Convertir a mayúsculas y quitar acentos
         nombre = quitar_acentos(nombre)
@@ -291,7 +305,9 @@ def hazte_socio():
         # Validar móvil (solo números)
         if not re.match(r'^\d{9}$', movil):
             flash('El número de móvil debe tener 9 dígitos.', 'error')
-            return render_template('auth/hazte_socio.html')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         # Convertir dirección a mayúsculas
         calle = quitar_acentos(calle.upper())
@@ -317,22 +333,53 @@ def hazte_socio():
         )
         
         db.session.add(solicitud)
-        db.session.flush()  # Para obtener el ID de la solicitud
+        try:
+            db.session.flush()  # Para obtener el ID de la solicitud
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear la solicitud: {str(e)}', 'error')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
+        
+        # Verificar que el ID de la solicitud esté disponible
+        if not solicitud.id:
+            db.session.rollback()
+            flash('Error: No se pudo obtener el ID de la solicitud. Por favor, inténtalo de nuevo.', 'error')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         # Procesar beneficiarios (número de miembros - 1, porque el socio no es beneficiario)
         beneficiarios_count = miembros - 1
         if beneficiarios_count > 0:
+            # Debug: mostrar todos los campos del formulario
+            print(f"[DEBUG] Procesando {beneficiarios_count} beneficiarios")
+            print(f"[DEBUG] Campos del formulario: {list(request.form.keys())}")
+            
             for i in range(1, beneficiarios_count + 1):
                 beneficiario_nombre = request.form.get(f'beneficiario_nombre_{i}', '').strip()
                 beneficiario_primer_apellido = request.form.get(f'beneficiario_primer_apellido_{i}', '').strip()
                 beneficiario_segundo_apellido = request.form.get(f'beneficiario_segundo_apellido_{i}', '').strip()
                 beneficiario_ano = request.form.get(f'beneficiario_ano_{i}', '').strip()
                 
-                # Validar campos obligatorios
-                if not all([beneficiario_nombre, beneficiario_primer_apellido, beneficiario_ano]):
-                    flash(f'Faltan datos del beneficiario {i}. Todos los campos obligatorios deben estar completos.', 'error')
+                print(f"[DEBUG] Beneficiario {i}: nombre={beneficiario_nombre}, apellido={beneficiario_primer_apellido}, año={beneficiario_ano}")
+                
+                # Validar campos obligatorios con mensajes más específicos
+                campos_faltantes = []
+                if not beneficiario_nombre:
+                    campos_faltantes.append('nombre')
+                if not beneficiario_primer_apellido:
+                    campos_faltantes.append('primer apellido')
+                if not beneficiario_ano:
+                    campos_faltantes.append('año de nacimiento')
+                
+                if campos_faltantes:
+                    flash(f'Beneficiario {i}: Faltan los siguientes campos obligatorios: {", ".join(campos_faltantes)}.', 'error')
                     db.session.rollback()
-                    return render_template('auth/hazte_socio.html')
+                    from datetime import datetime as dt
+                    año_actual = datetime.now().year
+                    return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
                 
                 # Validar año de nacimiento
                 try:
@@ -341,11 +388,15 @@ def hazte_socio():
                     if ano_nacimiento < 1900 or ano_nacimiento > año_actual:
                         flash(f'El año de nacimiento del beneficiario {i} no es válido.', 'error')
                         db.session.rollback()
-                        return render_template('auth/hazte_socio.html')
+                        from datetime import datetime as dt
+                        año_actual = datetime.now().year
+                        return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
                 except ValueError:
                     flash(f'El año de nacimiento del beneficiario {i} debe ser un número válido.', 'error')
                     db.session.rollback()
-                    return render_template('auth/hazte_socio.html')
+                    from datetime import datetime as dt
+                    año_actual = datetime.now().year
+                    return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
                 
                 # Convertir a mayúsculas y quitar acentos
                 beneficiario_nombre = quitar_acentos(beneficiario_nombre)
@@ -354,20 +405,31 @@ def hazte_socio():
                     beneficiario_segundo_apellido = quitar_acentos(beneficiario_segundo_apellido)
                 
                 # Crear beneficiario de la solicitud
-                beneficiario = BeneficiarioSolicitud(
-                    solicitud_id=solicitud.id,
-                    nombre=beneficiario_nombre,
-                    primer_apellido=beneficiario_primer_apellido,
-                    segundo_apellido=beneficiario_segundo_apellido if beneficiario_segundo_apellido else None,
-                    ano_nacimiento=ano_nacimiento
-                )
-                db.session.add(beneficiario)
+                try:
+                    beneficiario = BeneficiarioSolicitud(
+                        solicitud_id=solicitud.id,
+                        nombre=beneficiario_nombre,
+                        primer_apellido=beneficiario_primer_apellido,
+                        segundo_apellido=beneficiario_segundo_apellido if beneficiario_segundo_apellido else None,
+                        ano_nacimiento=ano_nacimiento
+                    )
+                    db.session.add(beneficiario)
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f'Error al crear el beneficiario {i}: {str(e)}', 'error')
+                    import traceback
+                    traceback.print_exc()
+                    from datetime import datetime as dt
+                    año_actual = datetime.now().year
+                    return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
         try:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            flash('Error al guardar la solicitud. Por favor, inténtalo de nuevo.', 'error')
+            flash(f'Error al guardar la solicitud: {str(e)}. Por favor, inténtalo de nuevo.', 'error')
+            import traceback
+            traceback.print_exc()
             return render_template('auth/hazte_socio.html')
         
         # Redirigir a la página de confirmación con el ID de la solicitud
@@ -397,15 +459,23 @@ def confirmacion_solicitud(solicitud_id):
     
     numero_socio = f"{nuevo_numero:04d}"  # Formato 0001, 0002, etc.
     
-    # Generar nombre de usuario: nombrenumero_de_socio
+    # Generar nombre de usuario: nombre + iniciales de los dos apellidos + año de nacimiento
     nombre_limpio = solicitud.nombre.lower().replace(' ', '').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u').replace('ñ', 'n')
-    nombre_usuario = f"{nombre_limpio}{numero_socio}"
+    
+    # Obtener iniciales de los apellidos
+    inicial_primer_apellido = solicitud.primer_apellido[0].lower() if solicitud.primer_apellido else ''
+    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else 'x'  # Si no hay segundo apellido, usar 'x'
+    
+    # Obtener año de nacimiento
+    ano_nacimiento = solicitud.fecha_nacimiento.year if solicitud.fecha_nacimiento else ''
+    
+    nombre_usuario = f"{nombre_limpio}{inicial_primer_apellido}{inicial_segundo_apellido}{ano_nacimiento}"
     
     # Verificar si el nombre de usuario ya existe y generar uno único
     contador = 1
     nombre_usuario_original = nombre_usuario
     while User.query.filter_by(nombre_usuario=nombre_usuario).first():
-        nombre_usuario = f"{nombre_limpio}{numero_socio}{contador}"
+        nombre_usuario = f"{nombre_limpio}{inicial_primer_apellido}{inicial_segundo_apellido}{ano_nacimiento}{contador}"
         contador += 1
     
     # Números de pago (estos deberían estar en configuración, por ahora hardcodeados)

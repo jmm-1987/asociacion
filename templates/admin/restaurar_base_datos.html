@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Restaurar Base de Datos - Panel Directiva{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-database-fill-down me-2 text-danger"></i>
+        Restaurar Base de Datos Completa
+    </h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Volver al Dashboard
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card shadow-lg border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    ⚠️ OPERACIÓN CRÍTICA - RESTAURAR BASE DE DATOS
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger border-danger border-3">
+                    <h4 class="alert-heading">
+                        <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                        ¡ADVERTENCIA CRÍTICA!
+                    </h4>
+                    <hr>
+                    <p class="mb-2"><strong>Esta operación es IRREVERSIBLE y DESTRUCTIVA:</strong></p>
+                    <ul class="mb-3">
+                        <li><strong>Se ELIMINARÁN TODOS los datos actuales</strong> de la base de datos</li>
+                        <li><strong>Se REEMPLAZARÁN</strong> con los datos del archivo de backup</li>
+                        <li><strong>NO se puede deshacer</strong> esta operación</li>
+                        <li><strong>Todos los usuarios</strong> perderán acceso si el backup es antiguo</li>
+                        <li><strong>La aplicación puede quedar inutilizable</strong> si el archivo está corrupto</li>
+                    </ul>
+                    <p class="mb-0"><strong>SOLO usa esta función si:</strong></p>
+                    <ul class="mb-0">
+                        <li>Tienes un backup reciente y válido</li>
+                        <li>Estás seguro de que quieres perder todos los datos actuales</li>
+                        <li>Has hecho un backup de los datos actuales antes de proceder</li>
+                        <li>Entiendes completamente las consecuencias</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Recomendación:</strong> Antes de restaurar, descarga un backup completo de la base de datos actual 
+                    usando la opción "Descargar Base de Datos Completa" en el menú de administración.
+                </div>
+                
+                <form method="POST" enctype="multipart/form-data" id="formRestaurar">
+                    <div class="mb-4">
+                        <label for="archivo" class="form-label fw-bold">
+                            <i class="bi bi-file-earmark-database me-2"></i>
+                            Seleccionar archivo de backup de base de datos
+                        </label>
+                        <input type="file" class="form-control form-control-lg" id="archivo" name="archivo" 
+                               accept=".db,.sql" required>
+                        <small class="text-muted d-block mt-2">
+                            <strong>SQLite:</strong> Archivo .db<br>
+                            <strong>PostgreSQL:</strong> Archivo .sql (dump generado con pg_dump)
+                        </small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <label for="confirmacion" class="form-label fw-bold text-danger">
+                                    <i class="bi bi-shield-exclamation me-2"></i>
+                                    Confirmación de Seguridad
+                                </label>
+                                <p class="text-muted mb-2">
+                                    Para confirmar que entiendes los riesgos, escribe <strong>"RESTAURAR"</strong> en mayúsculas:
+                                </p>
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="confirmacion" name="confirmacion" 
+                                       placeholder="Escribe RESTAURAR aquí" 
+                                       required 
+                                       autocomplete="off"
+                                       pattern="RESTAURAR">
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-lock me-1"></i>
+                                    Esta confirmación es obligatoria para prevenir restauraciones accidentales.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg" id="btnRestaurar">
+                            <i class="bi bi-database-fill-down me-2"></i>
+                            RESTAURAR BASE DE DATOS (IRREVERSIBLE)
+                        </button>
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancelar y Volver
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4 border-info">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Información sobre la Restauración
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6><strong>Proceso de restauración:</strong></h6>
+                <ol>
+                    <li>Se creará un backup automático del archivo actual (solo SQLite)</li>
+                    <li>Se reemplazará completamente la base de datos con el archivo seleccionado</li>
+                    <li>Se reiniciarán las conexiones de la base de datos</li>
+                    <li>La aplicación continuará funcionando con los datos restaurados</li>
+                </ol>
+                
+                <h6 class="mt-3"><strong>Formatos soportados:</strong></h6>
+                <ul>
+                    <li><strong>SQLite (.db):</strong> Archivo binario de SQLite</li>
+                    <li><strong>PostgreSQL (.sql):</strong> Dump SQL generado con pg_dump</li>
+                </ul>
+                
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Consejo:</strong> Si tienes dudas, contacta con el administrador del sistema antes de proceder.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('formRestaurar').addEventListener('submit', function(e) {
+    const confirmacion = document.getElementById('confirmacion').value;
+    const archivo = document.getElementById('archivo').files[0];
+    
+    if (confirmacion !== 'RESTAURAR') {
+        e.preventDefault();
+        alert('Debes escribir "RESTAURAR" en mayúsculas para confirmar.');
+        return false;
+    }
+    
+    if (!archivo) {
+        e.preventDefault();
+        alert('Debes seleccionar un archivo de backup.');
+        return false;
+    }
+    
+    const mensaje = '⚠️ ADVERTENCIA FINAL ⚠️\n\n' +
+                   'Estás a punto de RESTAURAR la base de datos completa.\n\n' +
+                   'Esto ELIMINARÁ TODOS los datos actuales y los reemplazará con los del archivo.\n\n' +
+                   'Esta operación es IRREVERSIBLE.\n\n' +
+                   '¿Estás ABSOLUTAMENTE SEGURO de que quieres continuar?';
+    
+    if (!confirm(mensaje)) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Deshabilitar el botón para evitar doble envío
+    document.getElementById('btnRestaurar').disabled = true;
+    document.getElementById('btnRestaurar').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Restaurando...';
+    
+    return true;
+});
+
+// Validar confirmación en tiempo real
+document.getElementById('confirmacion').addEventListener('input', function() {
+    const valor = this.value;
+    const btnRestaurar = document.getElementById('btnRestaurar');
+    
+    if (valor === 'RESTAURAR') {
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+        btnRestaurar.disabled = false;
+    } else {
+        this.classList.remove('is-valid');
+        this.classList.add('is-invalid');
+        btnRestaurar.disabled = true;
+    }
+});
+</script>
+{% endblock %}
+
