@@ -13,15 +13,33 @@ def create_app():
     # Configuración - usar variables de entorno para producción
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tu_clave_secreta_muy_segura_aqui_cambiar_en_produccion')
     
-    # Base de datos - PostgreSQL en producción, SQLite en desarrollo
+    # Base de datos - SQLite con disco persistente en Render, SQLite local en desarrollo
     database_url = os.environ.get('DATABASE_URL')
-    if database_url:
+    
+    # Si hay DATABASE_URL y es PostgreSQL, usarlo
+    if database_url and database_url.startswith('postgres'):
         # Render proporciona DATABASE_URL con postgres://, pero SQLAlchemy necesita postgresql://
         if database_url.startswith('postgres://'):
             database_url = database_url.replace('postgres://', 'postgresql://', 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///asociacion.db'
+        # Usar SQLite - determinar la ruta según el entorno
+        # En Render con disco persistente, usar /mnt/disk
+        # En desarrollo local, usar instance/
+        persistent_disk_path = os.environ.get('PERSISTENT_DISK_PATH')
+        is_render = os.environ.get('RENDER') == 'true'
+        
+        if persistent_disk_path:
+            # Ruta personalizada del disco persistente
+            db_path = os.path.join(persistent_disk_path, 'asociacion.db')
+            app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+        elif is_render:
+            # En Render, usar /mnt/disk (ruta estándar del disco persistente)
+            db_path = '/mnt/disk/asociacion.db'
+            app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+        else:
+            # Desarrollo local - usar instance/
+            app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///asociacion.db'
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
@@ -109,6 +127,17 @@ def create_app():
     # Crear tablas de base de datos (con manejo de errores)
     try:
         with app.app_context():
+            # Asegurar que el directorio de la base de datos existe
+            database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            if 'sqlite' in database_url.lower():
+                # Extraer la ruta del archivo SQLite
+                db_path = database_url.replace('sqlite:///', '')
+                if db_path and db_path != ':memory:':
+                    db_dir = os.path.dirname(db_path)
+                    if db_dir and not os.path.exists(db_dir):
+                        os.makedirs(db_dir, exist_ok=True)
+                        print(f"[INFO] Directorio de base de datos creado: {db_dir}")
+            
             db.create_all()
     except Exception as e:
         # Si hay un error al inicializar la BD, lo registramos pero no fallamos
