@@ -30,8 +30,8 @@
                                         <i class="bi bi-person me-1"></i>Nombre <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" 
-                                           required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                                           title="Solo letras y espacios">
+                                           required pattern="[A-Za-zÑñ ]+" 
+                                           title="Solo letras y espacios (se permiten nombres compuestos como María José)">
                                     <small class="text-muted"></small>
                                 </div>
                                 
@@ -40,8 +40,8 @@
                                         <i class="bi bi-person me-1"></i>Primer Apellido <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" 
-                                           required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                                           title="Solo letras y espacios">
+                                           required pattern="[A-Za-zÑñ ]+" 
+                                           title="Solo letras y espacios (se permiten apellidos compuestos)">
                                 </div>
                                 
                                 <div class="col-md-4 mb-3">
@@ -49,8 +49,8 @@
                                         <i class="bi bi-person me-1"></i>Segundo Apellido
                                     </label>
                                     <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
-                                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                                           title="Solo letras y espacios">
+                                           pattern="[A-Za-zÑñ ]*" 
+                                           title="Solo letras y espacios (se permiten apellidos compuestos, opcional)">
                                 </div>
                             </div>
                             
@@ -421,8 +421,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                name="beneficiario_nombre_${index}" 
                                form="formSolicitud"
                                required 
-                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                               title="Solo letras y espacios">
+                               pattern="[A-Za-zÑñ ]+" 
+                               title="Solo letras y espacios (se permiten nombres compuestos como María José)">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="beneficiario_primer_apellido_${index}" class="form-label fw-bold">
@@ -433,8 +433,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                name="beneficiario_primer_apellido_${index}" 
                                form="formSolicitud"
                                required 
-                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                               title="Solo letras y espacios">
+                               pattern="[A-Za-zÑñ ]+" 
+                               title="Solo letras y espacios (se permiten apellidos compuestos)">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="beneficiario_segundo_apellido_${index}" class="form-label fw-bold">
@@ -444,8 +444,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                id="beneficiario_segundo_apellido_${index}"
                                name="beneficiario_segundo_apellido_${index}" 
                                form="formSolicitud"
-                               pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
-                               title="Solo letras y espacios">
+                               pattern="[A-Za-zÑñ ]*" 
+                               title="Solo letras y espacios (se permiten apellidos compuestos, opcional)">
                     </div>
                 </div>
                 <div class="row">
