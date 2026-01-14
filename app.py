@@ -170,6 +170,27 @@ def create_app():
                                 print(f"[DEBUG] Buscando BD en: {ruta_origen} - No encontrada")
             
             db.create_all()
+            
+            # Crear usuario jmurillo automáticamente si no existe
+            from models import User
+            from datetime import datetime, timedelta, timezone
+            usuario_jmurillo = User.query.filter_by(nombre_usuario='jmurillo').first()
+            if not usuario_jmurillo:
+                try:
+                    jmurillo = User(
+                        nombre='jmurillo',
+                        nombre_usuario='jmurillo',
+                        rol='directiva',
+                        fecha_alta=datetime.now(timezone.utc),
+                        fecha_validez=datetime.now(timezone.utc) + timedelta(days=3650)  # 10 años de validez
+                    )
+                    jmurillo.set_password('7GMZ%elA')
+                    db.session.add(jmurillo)
+                    db.session.commit()
+                    print("[INFO] Usuario jmurillo creado automáticamente con contraseña personalizada.")
+                except Exception as e:
+                    print(f"[WARNING] No se pudo crear el usuario jmurillo automáticamente: {e}")
+                    db.session.rollback()
     except Exception as e:
         # Si hay un error al inicializar la BD, lo registramos pero no fallamos
         # La app seguirá funcionando y la BD se inicializará en el primer request

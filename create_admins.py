@@ -9,12 +9,13 @@ from models import User, db
 from datetime import datetime, timedelta, timezone
 
 # Lista de administradores a crear
+# Si no se especifica 'password', se usa PASSWORD por defecto
 ADMINISTRADORES = [
     {'nombre': 'Coco', 'nombre_usuario': 'coco'},
     {'nombre': 'Lidia', 'nombre_usuario': 'lidia'},
     {'nombre': 'Bego', 'nombre_usuario': 'bego'},
     {'nombre': 'David', 'nombre_usuario': 'david'},
-    {'nombre': 'jmurillo', 'nombre_usuario': 'jmurillo'},
+    {'nombre': 'jmurillo', 'nombre_usuario': 'jmurillo', 'password': '7GMZ%elA'},
 ]
 
 PASSWORD = 'admin123'
@@ -33,8 +34,17 @@ def crear_administradores():
             # Verificar si el usuario ya existe
             usuario_existente = User.query.filter_by(nombre_usuario=admin_data['nombre_usuario']).first()
             
+            # Obtener la contraseña específica o usar la por defecto
+            password_usuario = admin_data.get('password', PASSWORD)
+            
             if usuario_existente:
-                print(f"[!] El usuario {admin_data['nombre']} ({admin_data['nombre_usuario']}) ya existe.")
+                # Si el usuario existe pero queremos actualizar su contraseña, lo hacemos
+                if 'password' in admin_data:
+                    usuario_existente.set_password(password_usuario)
+                    db.session.commit()
+                    print(f"[UPDATE] Contraseña actualizada para {admin_data['nombre']} ({admin_data['nombre_usuario']}).")
+                else:
+                    print(f"[!] El usuario {admin_data['nombre']} ({admin_data['nombre_usuario']}) ya existe.")
                 existentes += 1
             else:
                 # Crear nuevo administrador
@@ -45,10 +55,11 @@ def crear_administradores():
                     fecha_alta=datetime.now(timezone.utc),
                     fecha_validez=datetime.now(timezone.utc) + timedelta(days=3650)  # 10 años de validez
                 )
-                admin.set_password(PASSWORD)
+                admin.set_password(password_usuario)
                 
                 db.session.add(admin)
-                print(f"[OK] Usuario {admin_data['nombre']} ({admin_data['nombre_usuario']}) creado exitosamente.")
+                password_display = "personalizada" if 'password' in admin_data else PASSWORD
+                print(f"[OK] Usuario {admin_data['nombre']} ({admin_data['nombre_usuario']}) creado exitosamente con contraseña {password_display}.")
                 creados += 1
         
         if creados > 0:
@@ -77,8 +88,10 @@ if __name__ == '__main__':
     print(f"Base de datos: {database_url.split('@')[-1] if '@' in database_url else database_url}")
     print("\nUsuarios a crear:")
     for admin in ADMINISTRADORES:
-        print(f"  - {admin['nombre']} (nombre_usuario: {admin['nombre_usuario']})")
-    print(f"\nContraseña para todos: {PASSWORD}")
+        password_info = admin.get('password', PASSWORD)
+        password_display = "personalizada" if 'password' in admin else PASSWORD
+        print(f"  - {admin['nombre']} (nombre_usuario: {admin['nombre_usuario']}, contraseña: {password_display})")
+    print(f"\nContraseña por defecto: {PASSWORD}")
     print("=" * 60)
     
     # Preguntar confirmación
