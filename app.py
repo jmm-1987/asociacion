@@ -137,6 +137,37 @@ def create_app():
                     if db_dir and not os.path.exists(db_dir):
                         os.makedirs(db_dir, exist_ok=True)
                         print(f"[INFO] Directorio de base de datos creado: {db_dir}")
+                    
+                    # Si estamos en Render con disco persistente y la BD no existe,
+                    # intentar copiar desde el repositorio
+                    is_render = os.environ.get('RENDER') == 'true'
+                    if is_render and not os.path.exists(db_path):
+                        import shutil
+                        # Obtener el directorio base del proyecto
+                        base_dir = os.path.dirname(os.path.abspath(__file__))
+                        
+                        # Buscar la base de datos en posibles ubicaciones del repositorio
+                        posibles_rutas = [
+                            os.path.join(base_dir, 'instance', 'asociacion.db'),
+                            os.path.join(base_dir, 'asociacion.db'),
+                            'instance/asociacion.db',
+                            'asociacion.db',
+                        ]
+                        
+                        # Añadir instance_path si existe
+                        if hasattr(app, 'instance_path'):
+                            posibles_rutas.insert(0, os.path.join(app.instance_path, 'asociacion.db'))
+                        
+                        for ruta_origen in posibles_rutas:
+                            if ruta_origen and os.path.exists(ruta_origen):
+                                try:
+                                    shutil.copy2(ruta_origen, db_path)
+                                    print(f"[INFO] Base de datos copiada desde {ruta_origen} a {db_path}")
+                                    break
+                                except Exception as e:
+                                    print(f"[WARNING] No se pudo copiar la BD desde {ruta_origen}: {e}")
+                            else:
+                                print(f"[DEBUG] Buscando BD en: {ruta_origen} - No encontrada")
             
             db.create_all()
     except Exception as e:
