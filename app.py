@@ -171,26 +171,48 @@ def create_app():
             
             db.create_all()
             
-            # Crear usuario jmurillo automáticamente si no existe
+            # Crear usuarios administradores automáticamente si no existen
             from models import User
             from datetime import datetime, timedelta, timezone
-            usuario_jmurillo = User.query.filter_by(nombre_usuario='jmurillo').first()
-            if not usuario_jmurillo:
-                try:
-                    jmurillo = User(
-                        nombre='jmurillo',
-                        nombre_usuario='jmurillo',
-                        rol='directiva',
-                        fecha_alta=datetime.now(timezone.utc),
-                        fecha_validez=datetime.now(timezone.utc) + timedelta(days=3650)  # 10 años de validez
-                    )
-                    jmurillo.set_password('7GMZ%elA')
-                    db.session.add(jmurillo)
+            
+            # Lista de administradores a crear (igual que en create_admins.py)
+            ADMINISTRADORES = [
+                {'nombre': 'Coco', 'nombre_usuario': 'coco'},
+                {'nombre': 'Lidia', 'nombre_usuario': 'lidia'},
+                {'nombre': 'Bego', 'nombre_usuario': 'bego'},
+                {'nombre': 'David', 'nombre_usuario': 'david'},
+                {'nombre': 'jmurillo', 'nombre_usuario': 'jmurillo', 'password': '7GMZ%elA'},
+            ]
+            PASSWORD_DEFAULT = 'admin123'
+            
+            try:
+                creados = 0
+                for admin_data in ADMINISTRADORES:
+                    # Verificar si el usuario ya existe
+                    usuario_existente = User.query.filter_by(nombre_usuario=admin_data['nombre_usuario']).first()
+                    
+                    if not usuario_existente:
+                        # Obtener la contraseña específica o usar la por defecto
+                        password_usuario = admin_data.get('password', PASSWORD_DEFAULT)
+                        
+                        # Crear nuevo administrador
+                        admin = User(
+                            nombre=admin_data['nombre'],
+                            nombre_usuario=admin_data['nombre_usuario'],
+                            rol='directiva',
+                            fecha_alta=datetime.now(timezone.utc),
+                            fecha_validez=datetime.now(timezone.utc) + timedelta(days=3650)  # 10 años de validez
+                        )
+                        admin.set_password(password_usuario)
+                        db.session.add(admin)
+                        creados += 1
+                
+                if creados > 0:
                     db.session.commit()
-                    print("[INFO] Usuario jmurillo creado automáticamente con contraseña personalizada.")
-                except Exception as e:
-                    print(f"[WARNING] No se pudo crear el usuario jmurillo automáticamente: {e}")
-                    db.session.rollback()
+                    print(f"[INFO] Se crearon {creados} administrador(es) automáticamente al iniciar la aplicación.")
+            except Exception as e:
+                print(f"[WARNING] No se pudieron crear los administradores automáticamente: {e}")
+                db.session.rollback()
     except Exception as e:
         # Si hay un error al inicializar la BD, lo registramos pero no fallamos
         # La app seguirá funcionando y la BD se inicializará en el primer request

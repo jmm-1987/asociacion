@@ -1619,7 +1619,24 @@ def descargar_base_datos():
                 flash('No se encontró el archivo de base de datos SQLite.', 'error')
                 return redirect(url_for('admin.dashboard'))
             
-            # Leer el archivo y enviarlo
+            # Cerrar todas las conexiones y hacer checkpoint de WAL para asegurar consistencia
+            try:
+                db.session.close_all()
+                db.engine.dispose()
+                
+                # Si está en modo WAL, hacer checkpoint para asegurar que todos los cambios están en el archivo principal
+                from sqlalchemy import text
+                with db.engine.connect() as conn:
+                    conn.execute(text('PRAGMA wal_checkpoint(FULL);'))
+                    conn.commit()
+                
+                # Cerrar de nuevo después del checkpoint
+                db.session.close_all()
+                db.engine.dispose()
+            except Exception as e:
+                print(f"[WARNING] No se pudo hacer checkpoint de WAL: {e}")
+            
+            # Leer el archivo completo y enviarlo
             with open(db_path, 'rb') as f:
                 db_data = f.read()
             
@@ -1753,18 +1770,59 @@ def restaurar_base_datos():
             if not os.path.isabs(db_path):
                 db_path = os.path.join(current_app.instance_path, db_path)
             
+            # Cerrar todas las conexiones antes de restaurar
+            db.session.close_all()
+            db.engine.dispose()
+            
             # Leer el archivo subido
             archivo_data = archivo.read()
+            
+            # Validar que el archivo no esté vacío
+            if len(archivo_data) == 0:
+                flash('El archivo de backup está vacío.', 'error')
+                return render_template('admin/restaurar_base_datos.html')
+            
+            # Validar que sea un archivo SQLite válido (debe empezar con "SQLite format 3")
+            if not archivo_data.startswith(b'SQLite format 3\x00'):
+                flash('El archivo no parece ser un archivo SQLite válido.', 'error')
+                return render_template('admin/restaurar_base_datos.html')
             
             # Hacer backup del archivo actual antes de restaurar
             if os.path.exists(db_path):
                 backup_actual = f"{db_path}.backup_antes_restauracion_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                shutil.copy2(db_path, backup_actual)
-                flash(f'Se creó un backup del archivo actual en: {backup_actual}', 'info')
+                try:
+                    shutil.copy2(db_path, backup_actual)
+                    flash(f'Se creó un backup del archivo actual en: {backup_actual}', 'info')
+                except Exception as e:
+                    flash(f'Advertencia: No se pudo crear backup del archivo actual: {e}', 'warning')
             
-            # Escribir el nuevo archivo
+            # Eliminar archivos auxiliares de WAL si existen (para evitar inconsistencias)
+            archivos_auxiliares = [
+                f"{db_path}-shm",
+                f"{db_path}-wal",
+                f"{db_path}.shm",
+                f"{db_path}.wal"
+            ]
+            for archivo_aux in archivos_auxiliares:
+                if os.path.exists(archivo_aux):
+                    try:
+                        os.remove(archivo_aux)
+                    except Exception as e:
+                        print(f"[WARNING] No se pudo eliminar archivo auxiliar {archivo_aux}: {e}")
+            
+            # Asegurar que el directorio existe
+            db_dir = os.path.dirname(db_path)
+            if db_dir and not os.path.exists(db_dir):
+                os.makedirs(db_dir, exist_ok=True)
+            
+            # Escribir el nuevo archivo completo
             with open(db_path, 'wb') as f:
                 f.write(archivo_data)
+            
+            # Verificar que el archivo se escribió correctamente
+            if not os.path.exists(db_path) or os.path.getsize(db_path) != len(archivo_data):
+                flash('Error al escribir el archivo de base de datos. La restauración puede estar incompleta.', 'error')
+                return render_template('admin/restaurar_base_datos.html')
             
             # Reiniciar conexiones de SQLAlchemy
             db.session.close_all()
