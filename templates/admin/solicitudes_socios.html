@@ -96,17 +96,18 @@
     <div class="card-header">
         <h5 class="mb-0">
             <i class="bi bi-list-ul me-2"></i>
-            Solicitudes ({{ solicitudes|length }})
+            Solicitudes ({{ solicitudes_con_usuario|length }})
         </h5>
     </div>
     <div class="card-body">
-        {% if solicitudes %}
+        {% if solicitudes_con_usuario %}
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Nombre Completo</th>
+                            <th>Nombre de Usuario</th>
                             <th>Móvil</th>
                             <th>Miembros Familia</th>
                             <th>Forma de Pago</th>
@@ -115,7 +116,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for solicitud in solicitudes %}
+                        {% for item in solicitudes_con_usuario %}
+                        {% set solicitud = item.solicitud %}
                         <tr>
                             <td>
                                 <small class="text-muted">
@@ -124,6 +126,9 @@
                             </td>
                             <td>
                                 <strong>{{ solicitud.nombre }} {{ solicitud.primer_apellido }}{% if solicitud.segundo_apellido %} {{ solicitud.segundo_apellido }}{% endif %}</strong>
+                            </td>
+                            <td>
+                                <code class="text-primary">{{ item.nombre_usuario }}</code>
                             </td>
                             <td>{{ solicitud.movil }}</td>
                             <td>

@@ -7,6 +7,7 @@ import unicodedata
 import os
 import shutil
 import threading
+import secrets
 try:
     import paramiko
     SFTP_AVAILABLE = True
@@ -315,6 +316,9 @@ def hazte_socio():
         numero = numero.strip()
         piso = piso.strip() if piso else None
         
+        # Generar token único para acceso seguro a la confirmación
+        token = secrets.token_urlsafe(32)  # Token seguro de 32 bytes codificado en URL-safe base64
+        
         # Crear solicitud (guardar contraseña en texto plano para mostrar a admin)
         solicitud = SolicitudSocio(
             nombre=nombre,
@@ -326,6 +330,7 @@ def hazte_socio():
             forma_de_pago=forma_de_pago,
             estado='por_confirmar',
             password_solicitud=password,  # Guardar contraseña temporalmente
+            token=token,  # Token único para acceso seguro
             calle=calle,
             numero=numero,
             piso=piso,
@@ -432,17 +437,18 @@ def hazte_socio():
             traceback.print_exc()
             return render_template('auth/hazte_socio.html')
         
-        # Redirigir a la página de confirmación con el ID de la solicitud
-        return redirect(url_for('auth.confirmacion_solicitud', solicitud_id=solicitud.id))
+        # Redirigir a la página de confirmación con el token único
+        return redirect(url_for('auth.confirmacion_solicitud', token=solicitud.token))
     
     from datetime import datetime as dt
     año_actual = datetime.now().year
     return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
 
-@auth_bp.route('/confirmacion-solicitud/<int:solicitud_id>')
-def confirmacion_solicitud(solicitud_id):
+@auth_bp.route('/confirmacion-solicitud/<token>')
+def confirmacion_solicitud(token):
     """Muestra la página de confirmación con todos los datos de la solicitud"""
-    solicitud = SolicitudSocio.query.get_or_404(solicitud_id)
+    # Buscar solicitud por token único en lugar de ID (más seguro que usar ID secuencial)
+    solicitud = SolicitudSocio.query.filter_by(token=token).first_or_404()
     
     # Generar nombre de usuario de forma predictiva (igual que en admin.py)
     # Calcular el próximo número de socio
@@ -479,12 +485,16 @@ def confirmacion_solicitud(solicitud_id):
         contador += 1
     
     # Números de pago (estos deberían estar en configuración, por ahora hardcodeados)
-    NUMERO_BIZUM = "612 345 678"
-    NUMERO_CUENTA = "ES12 3456 7890 1234 5678 9012"
+    NUMERO_BIZUM = "614 66 53 54"
+    NUMERO_CUENTA = "ES90 0078 0020 0440 0001 4737"
+    
+    # Obtener la contraseña de la solicitud
+    password = solicitud.password_solicitud if solicitud.password_solicitud else 'No especificada'
     
     return render_template('auth/confirmacion_solicitud.html', 
                          solicitud=solicitud,
                          numero_bizum=NUMERO_BIZUM,
                          numero_cuenta=NUMERO_CUENTA,
                          nombre_usuario=nombre_usuario,
-                         numero_socio=numero_socio)
+                         numero_socio=numero_socio,
+                         password=password)

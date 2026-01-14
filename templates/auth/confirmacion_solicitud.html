@@ -18,7 +18,7 @@
                 <i class="bi bi-camera-fill me-2"></i>
                 ¡GUÁRDATE UN PANTALLAZO!
             </h1>
-            <div class="alert alert-success d-inline-block px-4 py-2">
+            <!--<div class="alert alert-success d-inline-block px-4 py-2">
                 <h3 class="mb-0 fw-bold">
                     <i class="bi bi-currency-euro me-2"></i>
                     Precio: 20€
@@ -52,7 +52,7 @@
                     </p>
                     {% if solicitud.forma_de_pago == 'bizum' %}
                     <p class="mb-2">
-                        <strong>Realiza el Bizum al número:</strong>
+                        <strong>Realiza el Bizum de 20€ al número:</strong>
                         <span class="fs-5 fw-bold text-primary ms-2">{{ numero_bizum }}</span>
                     </p>
                     <p class="mb-0">
@@ -61,7 +61,7 @@
                     </p>
                     {% elif solicitud.forma_de_pago == 'transferencia' %}
                     <p class="mb-2">
-                        <strong>Realiza la transferencia a la cuenta:</strong>
+                        <strong>Realiza la transferencia de 20€ a la cuenta:</strong>
                         <span class="fs-5 fw-bold text-primary ms-2">{{ numero_cuenta }}</span>
                     </p>
                     <p class="mb-0">
@@ -107,7 +107,7 @@
                     </p>
                     <p class="mb-0">
                         <strong>Contraseña:</strong>
-                        <span class="fs-5 fw-bold text-primary ms-2">La que elegiste al registrarte</span>
+                        <span class="fs-5 fw-bold text-primary ms-2">{{password}}</span>
                     </p>
                     <p class="mt-2 mb-0 small text-muted">
                         <i class="bi bi-info-circle me-1"></i>

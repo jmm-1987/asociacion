@@ -160,6 +160,7 @@ class SolicitudSocio(db.Model):
     fecha_solicitud = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     fecha_confirmacion = db.Column(db.DateTime, nullable=True)
     password_solicitud = db.Column(db.String(255), nullable=True)  # Contraseña temporal hasta confirmación
+    token = db.Column(db.String(64), nullable=True, unique=True, index=True)  # Token único para acceso seguro a la confirmación
     calle = db.Column(db.String(200), nullable=False)
     numero = db.Column(db.String(20), nullable=False)
     piso = db.Column(db.String(20), nullable=True)  # Opcional

@@ -1005,6 +1005,29 @@ def marcar_asistencia(actividad_id, inscripcion_id):
     
     return redirect(url_for('admin.ver_inscritos', actividad_id=actividad_id))
 
+def calcular_nombre_usuario_solicitud(solicitud):
+    """Calcula el nombre de usuario predictivo para una solicitud"""
+    # Generar nombre de usuario: nombre + iniciales de los dos apellidos + año de nacimiento
+    nombre_limpio = solicitud.nombre.lower().replace(' ', '').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u').replace('ñ', 'n')
+    
+    # Obtener iniciales de los apellidos
+    inicial_primer_apellido = solicitud.primer_apellido[0].lower() if solicitud.primer_apellido else ''
+    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else 'x'
+    
+    # Obtener año de nacimiento
+    ano_nacimiento = solicitud.fecha_nacimiento.year if solicitud.fecha_nacimiento else ''
+    
+    nombre_usuario = f"{nombre_limpio}{inicial_primer_apellido}{inicial_segundo_apellido}{ano_nacimiento}"
+    
+    # Verificar si el nombre de usuario ya existe y generar uno único
+    contador = 1
+    nombre_usuario_original = nombre_usuario
+    while User.query.filter_by(nombre_usuario=nombre_usuario).first():
+        nombre_usuario = f"{nombre_limpio}{inicial_primer_apellido}{inicial_segundo_apellido}{ano_nacimiento}{contador}"
+        contador += 1
+    
+    return nombre_usuario
+
 @admin_bp.route('/solicitudes-socios')
 @login_required
 @directiva_required
@@ -1017,13 +1040,22 @@ def solicitudes_socios():
     else:
         solicitudes = SolicitudSocio.query.filter_by(estado=estado_filtro).order_by(SolicitudSocio.fecha_solicitud.desc()).all()
     
+    # Calcular nombre de usuario para cada solicitud
+    solicitudes_con_usuario = []
+    for solicitud in solicitudes:
+        nombre_usuario = calcular_nombre_usuario_solicitud(solicitud)
+        solicitudes_con_usuario.append({
+            'solicitud': solicitud,
+            'nombre_usuario': nombre_usuario
+        })
+    
     # Contar por estado
     total_por_confirmar = SolicitudSocio.query.filter_by(estado='por_confirmar').count()
     total_activas = SolicitudSocio.query.filter_by(estado='activa').count()
     total_rechazadas = SolicitudSocio.query.filter_by(estado='rechazada').count()
     
     return render_template('admin/solicitudes_socios.html',
-                         solicitudes=solicitudes,
+                         solicitudes_con_usuario=solicitudes_con_usuario,
                          estado_filtro=estado_filtro,
                          total_por_confirmar=total_por_confirmar,
                          total_activas=total_activas,
@@ -1046,37 +1078,73 @@ def ver_solicitud(solicitud_id):
 @directiva_required
 def editar_solicitud(solicitud_id):
     """Vista para editar una solicitud"""
+    print(f"\n[DEBUG] ===== editar_solicitud LLAMADA =====")
+    print(f"[DEBUG] Método HTTP: {request.method}")
+    print(f"[DEBUG] Solicitud ID: {solicitud_id}")
+    print(f"[DEBUG] URL: {request.url}")
+    
     solicitud = SolicitudSocio.query.get_or_404(solicitud_id)
     
     # Solo se puede editar si está por confirmar
     if solicitud.estado != 'por_confirmar':
+        print(f"[DEBUG] ERROR: Estado no es 'por_confirmar', es '{solicitud.estado}'")
         flash('Solo se pueden editar solicitudes pendientes de confirmación.', 'error')
         return redirect(url_for('admin.ver_solicitud', solicitud_id=solicitud_id))
     
     beneficiarios = BeneficiarioSolicitud.query.filter_by(solicitud_id=solicitud_id).order_by(BeneficiarioSolicitud.id).all()
     
     if request.method == 'POST':
-        # Actualizar datos del socio
-        solicitud.nombre = request.form.get('nombre', '').strip().upper()
-        solicitud.primer_apellido = request.form.get('primer_apellido', '').strip().upper()
-        solicitud.segundo_apellido = request.form.get('segundo_apellido', '').strip().upper() or None
-        solicitud.movil = request.form.get('movil', '').strip()
-        solicitud.miembros_unidad_familiar = int(request.form.get('miembros_unidad_familiar', 1))
-        solicitud.forma_de_pago = request.form.get('forma_de_pago', '').strip()
+        print(f"[DEBUG] ✓ RECIBIDO POST - PROCESANDO FORMULARIO")
+        from datetime import datetime as dt
+        
+        print(f"\n[DEBUG] ===== INICIO EDICIÓN SOLICITUD {solicitud_id} =====")
+        print(f"[DEBUG] Método: {request.method}")
+        
+        # Obtener datos del formulario
+        nuevo_nombre = request.form.get('nombre', '').strip().upper()
+        nuevo_primer_apellido = request.form.get('primer_apellido', '').strip().upper()
+        nuevo_segundo_apellido = request.form.get('segundo_apellido', '').strip().upper() or None
+        nuevo_movil = request.form.get('movil', '').strip()
+        nuevos_miembros = int(request.form.get('miembros_unidad_familiar', 1))
+        nueva_forma_pago = request.form.get('forma_de_pago', '').strip()
+        
+        print(f"[DEBUG] Datos recibidos del formulario:")
+        print(f"[DEBUG]   Nombre: '{nuevo_nombre}' (antes: '{solicitud.nombre}')")
+        print(f"[DEBUG]   Primer apellido: '{nuevo_primer_apellido}' (antes: '{solicitud.primer_apellido}')")
+        print(f"[DEBUG]   Segundo apellido: '{nuevo_segundo_apellido}' (antes: '{solicitud.segundo_apellido}')")
+        print(f"[DEBUG]   Móvil: '{nuevo_movil}' (antes: '{solicitud.movil}')")
+        print(f"[DEBUG]   Miembros: {nuevos_miembros} (antes: {solicitud.miembros_unidad_familiar})")
+        print(f"[DEBUG]   Forma pago: '{nueva_forma_pago}' (antes: '{solicitud.forma_de_pago}')")
         
         # Validar móvil
-        if not re.match(r'^\d{9}$', solicitud.movil):
+        if not re.match(r'^\d{9}$', nuevo_movil):
+            print(f"[DEBUG] ERROR: Móvil inválido")
             flash('El número de móvil debe tener 9 dígitos.', 'error')
-            return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios)
+            beneficiarios = BeneficiarioSolicitud.query.filter_by(solicitud_id=solicitud_id).order_by(BeneficiarioSolicitud.id).all()
+            return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
         
-        # Actualizar o crear beneficiarios
-        nuevos_beneficiarios_count = solicitud.miembros_unidad_familiar - 1
+        print(f"[DEBUG] Validación OK, modificando objeto...")
+        
+        # Modificar el objeto directamente - LA FORMA MÁS SIMPLE
+        solicitud.nombre = nuevo_nombre
+        solicitud.primer_apellido = nuevo_primer_apellido
+        solicitud.segundo_apellido = nuevo_segundo_apellido
+        solicitud.movil = nuevo_movil
+        solicitud.miembros_unidad_familiar = nuevos_miembros
+        solicitud.forma_de_pago = nueva_forma_pago
+        
+        print(f"[DEBUG] Objeto modificado. Valores después:")
+        print(f"[DEBUG]   Nombre: '{solicitud.nombre}'")
+        print(f"[DEBUG]   Móvil: '{solicitud.movil}'")
         
         # Eliminar beneficiarios existentes
-        for beneficiario in beneficiarios:
-            db.session.delete(beneficiario)
+        print(f"[DEBUG] Eliminando {len(beneficiarios)} beneficiarios existentes...")
+        for b in beneficiarios:
+            db.session.delete(b)
         
         # Crear nuevos beneficiarios
+        nuevos_beneficiarios_count = nuevos_miembros - 1
+        print(f"[DEBUG] Creando {nuevos_beneficiarios_count} nuevos beneficiarios...")
         if nuevos_beneficiarios_count > 0:
             for i in range(1, nuevos_beneficiarios_count + 1):
                 beneficiario_nombre = request.form.get(f'beneficiario_nombre_{i}', '').strip().upper()
@@ -1089,34 +1157,66 @@ def editar_solicitud(solicitud_id):
                         ano_nacimiento = int(beneficiario_ano)
                         año_actual = datetime.now().year
                         if ano_nacimiento < 1900 or ano_nacimiento > año_actual:
-                            flash(f'El año de nacimiento del beneficiario {i} no es válido.', 'error')
+                            print(f"[DEBUG] ERROR: Año inválido para beneficiario {i}")
                             db.session.rollback()
-                            return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios)
-                        
-                        nuevo_beneficiario = BeneficiarioSolicitud(
-                            solicitud_id=solicitud.id,
-                            nombre=beneficiario_nombre,
-                            primer_apellido=beneficiario_primer_apellido,
-                            segundo_apellido=beneficiario_segundo_apellido,
-                            ano_nacimiento=ano_nacimiento
-                        )
-                        db.session.add(nuevo_beneficiario)
+                            flash(f'El año de nacimiento del beneficiario {i} no es válido.', 'error')
+                            beneficiarios = BeneficiarioSolicitud.query.filter_by(solicitud_id=solicitud_id).order_by(BeneficiarioSolicitud.id).all()
+                            return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
                     except ValueError:
-                        flash(f'El año de nacimiento del beneficiario {i} debe ser un número válido.', 'error')
+                        print(f"[DEBUG] ERROR: ValueError en beneficiario {i}")
                         db.session.rollback()
-                        return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios)
+                        flash(f'El año de nacimiento del beneficiario {i} debe ser un número válido.', 'error')
+                        beneficiarios = BeneficiarioSolicitud.query.filter_by(solicitud_id=solicitud_id).order_by(BeneficiarioSolicitud.id).all()
+                        return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
+                    
+                    nuevo_beneficiario = BeneficiarioSolicitud(
+                        solicitud_id=solicitud_id,
+                        nombre=beneficiario_nombre,
+                        primer_apellido=beneficiario_primer_apellido,
+                        segundo_apellido=beneficiario_segundo_apellido,
+                        ano_nacimiento=ano_nacimiento
+                    )
+                    db.session.add(nuevo_beneficiario)
+                    print(f"[DEBUG]   Beneficiario {i} agregado")
         
-        try:
-            db.session.commit()
-            flash('Solicitud actualizada correctamente.', 'success')
-            return redirect(url_for('admin.ver_solicitud', solicitud_id=solicitud_id))
-        except Exception as e:
-            db.session.rollback()
-            db.session.rollback()
-            flash('Error al actualizar la solicitud. Por favor, inténtalo de nuevo.', 'error')
-            return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
+        # COMMIT - NADA MÁS
+        print(f"[DEBUG] Estado de la sesión antes del commit:")
+        print(f"[DEBUG]   - Objetos nuevos: {len(db.session.new)}")
+        print(f"[DEBUG]   - Objetos modificados (dirty): {len(db.session.dirty)}")
+        print(f"[DEBUG]   - Objetos eliminados: {len(db.session.deleted)}")
+        
+        if solicitud in db.session.dirty:
+            print(f"[DEBUG] ✓ La solicitud está marcada como modificada (dirty)")
+        else:
+            print(f"[DEBUG] ✗ ERROR: La solicitud NO está marcada como modificada!")
+            # Forzar que se marque como modificada
+            db.session.add(solicitud)
+            print(f"[DEBUG]   Forzando add() a la sesión...")
+        
+        print(f"[DEBUG] Ejecutando COMMIT...")
+        db.session.commit()
+        print(f"[DEBUG] ✓ COMMIT realizado")
+        
+        # Verificar que se guardó
+        db.session.expire_all()
+        solicitud_verificada = SolicitudSocio.query.get(solicitud_id)
+        print(f"[DEBUG] Verificación después del commit:")
+        print(f"[DEBUG]   Nombre en BD: '{solicitud_verificada.nombre}'")
+        print(f"[DEBUG]   Móvil en BD: '{solicitud_verificada.movil}'")
+        
+        if solicitud_verificada.nombre == nuevo_nombre:
+            print(f"[DEBUG] ✓ Los datos se guardaron correctamente")
+        else:
+            print(f"[DEBUG] ✗ ERROR: Los datos NO se guardaron!")
+        
+        print(f"[DEBUG] ===== FIN EDICIÓN SOLICITUD {solicitud_id} =====\n")
+        
+        flash('Solicitud actualizada correctamente.', 'success')
+        return redirect(url_for('admin.ver_solicitud', solicitud_id=solicitud_id))
     
     from datetime import datetime as dt
+    print(f"[DEBUG] Renderizando template GET (formulario de edición)")
+    print(f"[DEBUG] ===== FIN editar_solicitud (GET) =====\n")
     return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
 
 @admin_bp.route('/solicitudes-socios/<int:solicitud_id>/confirmar', methods=['POST'])
