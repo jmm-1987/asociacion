@@ -160,7 +160,7 @@
                 <tr>
                     <th>#</th>
                     <th>Nombre</th>
-                    <th>Nombre de Usuario</th>
+                    <th>Email</th>
                     <th>Fecha de Inscripción</th>
                     <th>Asistencia</th>
                 </tr>
@@ -170,7 +170,7 @@
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td><strong>{{ inscripcion.usuario.nombre }}</strong></td>
-                        <td>{{ inscripcion.usuario.nombre_usuario }}</td>
+                        <td>{{ inscripcion.usuario.email }}</td>
                         <td>{{ inscripcion.fecha_inscripcion.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
                             {% if inscripcion.asiste %}

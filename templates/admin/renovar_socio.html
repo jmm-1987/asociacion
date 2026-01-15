@@ -19,7 +19,7 @@
                     {% if socio.numero_socio %}
                         <p class="mb-1"><strong>Número de Socio:</strong> <span class="badge bg-secondary">{{ socio.numero_socio }}</span></p>
                     {% endif %}
-                    <p class="mb-1"><strong>Nombre de Usuario:</strong> {{ socio.nombre_usuario }}</p>
+                    <p class="mb-1"><strong>Email:</strong> {{ socio.email }}</p>
                     <p class="mb-0"><strong>Validez actual:</strong> {{ socio.fecha_validez.strftime('%d/%m/%Y') }}</p>
                 </div>
                 

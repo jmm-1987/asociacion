@@ -24,11 +24,8 @@
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text" class="form-control" name="search" 
-                           placeholder="Buscar por nombre, nombre de usuario o fecha de validez..." 
+                           placeholder="Buscar por nombre, email o fecha de validez..." 
                            value="{{ search_query or '' }}" id="searchInput">
-                    {% if solo_ninos %}
-                        <input type="hidden" name="solo_ninos" value="on">
-                    {% endif %}
                 </div>
             </div>
             <div class="col-md-4">
@@ -37,7 +34,7 @@
                         <i class="bi bi-search me-1"></i>
                         Buscar
                     </button>
-                    {% if search_query or solo_ninos %}
+                    {% if search_query %}
                         <a href="{{ url_for('admin.gestion_socios') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-x-circle me-1"></i>
                             Limpiar
@@ -47,32 +44,13 @@
             </div>
         </form>
         <hr>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="mostrarBeneficiarios" 
-                           onchange="toggleBeneficiarios()">
-                    <label class="form-check-label" for="mostrarBeneficiarios">
-                        <i class="bi bi-people-fill me-1"></i>
-                        Mostrar beneficiarios
-                    </label>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <form method="GET" action="{{ url_for('admin.gestion_socios') }}" class="d-inline" id="filtroNinosForm">
-                    {% if search_query %}
-                        <input type="hidden" name="search" value="{{ search_query }}">
-                    {% endif %}
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="solo_ninos" name="solo_ninos"
-                               onchange="document.getElementById('filtroNinosForm').submit()" {% if solo_ninos %}checked{% endif %}>
-                        <label class="form-check-label" for="solo_ninos">
-                            <i class="bi bi-balloon-heart me-1"></i>
-                            Solo niños (menores de 18 años)
-                        </label>
-                    </div>
-                </form>
-            </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="mostrarBeneficiarios" 
+                   onchange="toggleBeneficiarios()">
+            <label class="form-check-label" for="mostrarBeneficiarios">
+                <i class="bi bi-people-fill me-1"></i>
+                Mostrar beneficiarios
+            </label>
         </div>
     </div>
 </div>
@@ -92,7 +70,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Nombre</th>
-                            <th>Nombre de Usuario</th>
+                            <th>Email</th>
                             <th>Fecha de Alta</th>
                             <th>Fecha de Validez</th>
                             <th>Estado</th>
@@ -103,20 +81,13 @@
                         {% for socio in socios %}
                             <tr class="socio-row" data-socio-id="{{ socio.id }}">
                                 <td>
-                                    <strong class="text-primary">{{ socio.nombre }}</strong>
-                                    {% if socio.ano_nacimiento %}
-                                        {% set año_actual = datetime.now().year %}
-                                        {% set edad = año_actual - socio.ano_nacimiento %}
-                                        {% if edad < 18 %}
-                                            <i class="bi bi-emoji-smile text-warning ms-1" title="Niño"></i>
-                                        {% endif %}
-                                    {% endif %}
+                                    <strong>{{ socio.nombre }}</strong>
                                     {% if socio.numero_socio %}
-                                        <br><small class="text-muted">Nº Socio: <strong class="text-primary">{{ socio.numero_socio }}</strong></small>
+                                        <br><small class="text-muted">Nº Socio: <strong>{{ socio.numero_socio }}</strong></small>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {{ socio.nombre_usuario }}
+                                    {{ socio.email }}
                                     {% if socio.password_plain %}
                                         <br><small class="text-info">Contraseña: <code>{{ socio.password_plain }}</code></small>
                                     {% endif %}
@@ -137,18 +108,11 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ url_for('admin.editar_socio', socio_id=socio.id) }}" 
-                                           class="btn btn-outline-primary btn-sm" 
-                                           title="Editar Socio">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <a href="{{ url_for('admin.renovar_socio', socio_id=socio.id) }}" 
-                                           class="btn btn-outline-warning btn-sm" 
-                                           title="Renovar Suscripción">
-                                            <i class="bi bi-arrow-clockwise"></i>
-                                        </a>
-                                    </div>
+                                    <a href="{{ url_for('admin.renovar_socio', socio_id=socio.id) }}" 
+                                       class="btn btn-outline-warning btn-sm" 
+                                       title="Renovar Suscripción">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% if socio.beneficiarios_lista %}
@@ -161,15 +125,10 @@
                                             </strong>
                                             <div class="mt-2">
                                                 {% for beneficiario in socio.beneficiarios_lista %}
-                                                    {% set año_actual = datetime.now().year %}
-                                                    {% set edad_benef = año_actual - beneficiario.ano_nacimiento %}
                                                     <div class="d-inline-block me-3 mb-2">
                                                         <span class="badge bg-success">
                                                             {% if beneficiario.numero_beneficiario %}<strong>{{ beneficiario.numero_beneficiario }}</strong> - {% endif %}
                                                             {{ beneficiario.nombre }} {{ beneficiario.primer_apellido }}{% if beneficiario.segundo_apellido %} {{ beneficiario.segundo_apellido }}{% endif %}
-                                                            {% if edad_benef < 18 %}
-                                                                <i class="bi bi-emoji-smile text-warning ms-1" title="Niño"></i>
-                                                            {% endif %}
                                                             <small class="ms-1">({{ beneficiario.ano_nacimiento }})</small>
                                                         </span>
                                                     </div>

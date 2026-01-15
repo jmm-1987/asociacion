@@ -46,11 +46,11 @@
                                 
                                 <div class="col-md-4 mb-3">
                                     <label for="segundo_apellido" class="form-label fw-bold">
-                                        <i class="bi bi-person me-1"></i>Segundo Apellido
+                                        <i class="bi bi-person me-1"></i>Segundo Apellido <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
-                                           pattern="[A-Za-zÑñ ]*" 
-                                           title="Solo letras y espacios (se permiten apellidos compuestos, opcional)">
+                                           required pattern="[A-Za-zÑñ ]+" 
+                                           title="Solo letras y espacios (se permiten apellidos compuestos)">
                                 </div>
                             </div>
                             
@@ -438,14 +438,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="beneficiario_segundo_apellido_${index}" class="form-label fw-bold">
-                            <i class="bi bi-person me-1"></i>Segundo Apellido
+                            <i class="bi bi-person me-1"></i>Segundo Apellido <span class="text-danger">*</span>
                         </label>
                         <input type="text" class="form-control beneficiario-segundo-apellido" 
                                id="beneficiario_segundo_apellido_${index}"
                                name="beneficiario_segundo_apellido_${index}" 
                                form="formSolicitud"
-                               pattern="[A-Za-zÑñ ]*" 
-                               title="Solo letras y espacios (se permiten apellidos compuestos, opcional)">
+                               required 
+                               pattern="[A-Za-zÑñ ]+" 
+                               title="Solo letras y espacios (se permiten apellidos compuestos)">
                     </div>
                 </div>
                 <div class="row">

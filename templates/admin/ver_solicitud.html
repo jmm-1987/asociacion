@@ -45,19 +45,11 @@
                         {{ solicitud.movil }}
                     </div>
                     <div class="col-md-6 mb-3">
-                        <strong>Año de Nacimiento:</strong><br>
-                        {% if solicitud.fecha_nacimiento %}
-                            {{ solicitud.fecha_nacimiento.year }}
-                        {% else %}
-                            <span class="text-muted">No especificado</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
                         <strong>Miembros de la Unidad Familiar:</strong><br>
                         <span class="badge bg-info">{{ solicitud.miembros_unidad_familiar }}</span>
                     </div>
+                </div>
+                <div class="row">
                     <div class="col-md-6 mb-3">
                         <strong>Forma de Pago:</strong><br>
                         {% if solicitud.forma_de_pago == 'bizum' %}
@@ -68,8 +60,6 @@
                             <span class="badge bg-warning">Contado</span>
                         {% endif %}
                     </div>
-                </div>
-                <div class="row">
                     <div class="col-md-6 mb-3">
                         <strong>Estado:</strong><br>
                         {% if solicitud.estado == 'por_confirmar' %}
@@ -79,30 +69,6 @@
                         {% else %}
                             <span class="badge bg-danger">Rechazada</span>
                         {% endif %}
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-12 mb-3">
-                        <h6 class="fw-bold mb-3">
-                            <i class="bi bi-geo-alt me-2"></i>Dirección
-                        </h6>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <strong>Calle:</strong><br>
-                        {{ solicitud.calle }}
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <strong>Número:</strong><br>
-                        {{ solicitud.numero }}
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <strong>Piso:</strong><br>
-                        {{ solicitud.piso or '-' }}
-                    </div>
-                    <div class="col-md-12 mb-3">
-                        <strong>Población:</strong><br>
-                        {{ solicitud.poblacion }}
                     </div>
                 </div>
             </div>

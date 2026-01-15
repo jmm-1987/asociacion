@@ -151,7 +151,7 @@ class SolicitudSocio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     primer_apellido = db.Column(db.String(100), nullable=False)
-    segundo_apellido = db.Column(db.String(100), nullable=True)
+    segundo_apellido = db.Column(db.String(100), nullable=False)
     movil = db.Column(db.String(20), nullable=False)
     fecha_nacimiento = db.Column(db.Date, nullable=True)  # Fecha de nacimiento del socio
     miembros_unidad_familiar = db.Column(db.Integer, nullable=False)
@@ -160,7 +160,7 @@ class SolicitudSocio(db.Model):
     fecha_solicitud = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     fecha_confirmacion = db.Column(db.DateTime, nullable=True)
     password_solicitud = db.Column(db.String(255), nullable=True)  # Contraseña temporal hasta confirmación
-    token = db.Column(db.String(64), nullable=True, unique=True, index=True)  # Token único para acceso seguro a la confirmación
+    token = db.Column(db.String(255), nullable=True, unique=True)  # Token único para acceso seguro a la confirmación
     calle = db.Column(db.String(200), nullable=False)
     numero = db.Column(db.String(20), nullable=False)
     piso = db.Column(db.String(20), nullable=True)  # Opcional
@@ -179,7 +179,7 @@ class BeneficiarioSolicitud(db.Model):
     solicitud_id = db.Column(db.Integer, db.ForeignKey('solicitudes_socio.id'), nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
     primer_apellido = db.Column(db.String(100), nullable=False)
-    segundo_apellido = db.Column(db.String(100), nullable=True)
+    segundo_apellido = db.Column(db.String(100), nullable=False)
     ano_nacimiento = db.Column(db.Integer, nullable=False)
     
     def __repr__(self):

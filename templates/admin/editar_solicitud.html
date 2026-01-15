@@ -153,7 +153,7 @@
     </div>
     
     <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-primary btn-lg" id="btnGuardar" data-no-loading>
+        <button type="submit" class="btn btn-primary btn-lg">
             <i class="bi bi-save me-2"></i>
             Guardar Cambios
         </button>
@@ -214,71 +214,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Limpiar espacios en todos los campos al enviar el formulario
     const form = document.getElementById('formEditarSolicitud');
-    const btnGuardar = document.getElementById('btnGuardar');
-    
     if (form) {
-        console.log('[DEBUG JS] Formulario encontrado, agregando listener submit');
-        console.log('[DEBUG JS] Método del formulario:', form.method);
-        console.log('[DEBUG JS] Action del formulario:', form.action);
-        
-        // Listener en el botón directamente también
-        if (btnGuardar) {
-            btnGuardar.addEventListener('click', function(e) {
-                console.log('[DEBUG JS] ✓ CLICK EN BOTÓN GUARDAR');
-                console.log('[DEBUG JS] Tipo del botón:', btnGuardar.type);
-                console.log('[DEBUG JS] Formulario válido:', form.checkValidity());
-                
-                if (!form.checkValidity()) {
-                    console.log('[DEBUG JS] ✗ Formulario NO válido - validación HTML5 falló');
-                    form.reportValidity();
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Limpiar espacios antes de enviar
-                const todosLosCampos = form.querySelectorAll('input[type="text"], input[type="tel"], input[type="number"]');
-                todosLosCampos.forEach(function(campo) {
-                    limpiarEspacios(campo);
-                });
-                
-                // Deshabilitar el botón
-                btnGuardar.disabled = true;
-                btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
-                
-                console.log('[DEBUG JS] Enviando formulario...');
-                
-                // Forzar el envío del formulario manualmente después de un pequeño delay
-                setTimeout(function() {
-                    console.log('[DEBUG JS] Ejecutando form.submit()...');
-                    form.submit();
-                }, 100);
-            });
-        }
-        
         form.addEventListener('submit', function(e) {
-            console.log('[DEBUG JS] ✓ EVENTO SUBMIT DISPARADO');
-            console.log('[DEBUG JS] Método:', form.method);
-            console.log('[DEBUG JS] Action:', form.action);
-            
-            // Deshabilitar el botón para evitar doble envío
-            const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                console.log('[DEBUG JS] Deshabilitando botón submit');
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
-            }
-            
-            console.log('[DEBUG JS] Formulario se enviará ahora...');
-            // NO hacer preventDefault ni return false - dejar que se envíe normalmente
+            const todosLosCampos = form.querySelectorAll('input[type="text"], input[type="tel"], input[type="number"]');
+            todosLosCampos.forEach(function(campo) {
+                limpiarEspacios(campo);
+            });
         });
-        
-        // También escuchar si hay algún error de validación
-        form.addEventListener('invalid', function(e) {
-            console.log('[DEBUG JS] ✗ Campo inválido:', e.target.name);
-        }, true);
-        
-    } else {
-        console.error('[DEBUG JS] ERROR: No se encontró el formulario con ID formEditarSolicitud');
     }
     
     // Función para generar campos de beneficiario
@@ -343,22 +285,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const miembros = parseInt(miembrosInput.value) || 0;
         const beneficiarios = Math.max(0, miembros - 1);
-        const beneficiariosActuales = body.querySelectorAll('.beneficiario-item').length;
-        
-        console.log('[DEBUG JS] actualizarBeneficiarios - Miembros:', miembros, 'Beneficiarios necesarios:', beneficiarios, 'Beneficiarios actuales:', beneficiariosActuales);
         
         if (beneficiarios > 0) {
             container.style.display = 'block';
-            
-            // SIEMPRE actualizar si el número cambió
-            if (beneficiariosActuales !== beneficiarios) {
-                console.log('[DEBUG JS] Actualizando beneficiarios de', beneficiariosActuales, 'a', beneficiarios);
-                
+            // Solo actualizar si no hay beneficiarios existentes
+            if (body.querySelectorAll('.beneficiario-item').length === 0) {
                 // Preservar el texto explicativo si existe
                 const textoExplicativo = body.querySelector('.alert-info');
                 const textoHTML = textoExplicativo ? textoExplicativo.outerHTML : '';
-                
-                // Limpiar y regenerar todos los beneficiarios
                 body.innerHTML = textoHTML;
                 for (let i = 1; i <= beneficiarios; i++) {
                     body.innerHTML += generarCamposBeneficiario(i);

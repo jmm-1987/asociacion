@@ -18,20 +18,8 @@
    - **Start Command**: `gunicorn wsgi:app`
    - **Plan**: Free (o el plan que prefieras)
 
-### 3. Configurar Base de Datos SQLite con Disco Persistente
+### 3. Crear Base de Datos PostgreSQL
 
-**Opción A: SQLite con Disco Persistente (Recomendado para esta aplicación)**
-
-1. En Render Dashboard, ve a tu servicio web
-2. En la sección "Disks", click en "Add Disk"
-3. Configura el disco persistente:
-   - **Mount Path**: `/mnt/disk`
-   - **Size**: Elige el tamaño que necesites (mínimo 1GB recomendado)
-4. La aplicación detectará automáticamente el disco y usará SQLite en `/mnt/disk/asociacion.db`
-
-**Opción B: PostgreSQL (Alternativa)**
-
-Si prefieres usar PostgreSQL:
 1. En Render Dashboard, click en "New +" → "PostgreSQL"
 2. Configura la base de datos:
    - **Name**: asociacion-db
@@ -45,14 +33,8 @@ Si prefieres usar PostgreSQL:
 En la configuración del servicio web, añade estas variables de entorno:
 
 - **SECRET_KEY**: Genera una clave secreta segura (puedes usar: `python -c "import secrets; print(secrets.token_hex(32))"`)
-- **FLASK_ENV**: `production` (opcional)
-
-**Para SQLite con disco persistente (Opción A):**
-- **NO** configures `DATABASE_URL` (o déjala vacía)
-- La aplicación usará automáticamente `/mnt/disk/asociacion.db`
-
-**Para PostgreSQL (Opción B):**
 - **DATABASE_URL**: Usa la **Internal Database URL** de la base de datos PostgreSQL creada
+- **FLASK_ENV**: `production` (opcional)
 
 ### 5. Desplegar
 
@@ -72,22 +54,16 @@ La aplicación creará automáticamente las tablas al iniciar. Los usuarios de p
 
 ## Notas Importantes
 
-- La aplicación detecta automáticamente el tipo de base de datos:
-  - Si hay `DATABASE_URL` con PostgreSQL, usa PostgreSQL
-  - Si hay disco persistente montado en `/mnt/disk`, usa SQLite en esa ubicación
-  - Si no hay ninguna de las anteriores, usa SQLite local en `instance/`
+- La aplicación usa PostgreSQL en producción y SQLite en desarrollo local
 - El archivo `render.yaml` puede usarse para desplegar automáticamente, pero también puedes hacerlo manualmente
 - Asegúrate de que el `SECRET_KEY` sea único y seguro en producción
 - La base de datos se inicializa automáticamente con las tablas necesarias
-- **SQLite con disco persistente**: Los datos se guardan en `/mnt/disk/asociacion.db` y persisten entre despliegues
 
 ## Solución de Problemas
 
 ### Error de conexión a la base de datos
-- **Para SQLite**: Verifica que el disco persistente esté montado en `/mnt/disk`
-- **Para PostgreSQL**: Verifica que `DATABASE_URL` esté correctamente configurada
+- Verifica que `DATABASE_URL` esté correctamente configurada
 - Asegúrate de usar la **Internal Database URL** (no la External) si la base de datos está en el mismo servicio de Render
-- Verifica los logs para ver qué ruta de base de datos está usando la aplicación
 
 ### Error al iniciar
 - Revisa los logs en Render Dashboard

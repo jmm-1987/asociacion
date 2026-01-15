@@ -243,7 +243,7 @@ def hazte_socio():
         poblacion = request.form.get('poblacion', '').strip()
         
         # Validaciones
-        if not all([nombre, primer_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, password_confirm, ano_nacimiento, calle, numero, poblacion]):
+        if not all([nombre, primer_apellido, segundo_apellido, movil, miembros_unidad_familiar, forma_de_pago, password, password_confirm, ano_nacimiento, calle, numero, poblacion]):
             flash('Todos los campos obligatorios deben estar completos.', 'error')
             from datetime import datetime as dt
             año_actual = datetime.now().year
@@ -300,8 +300,7 @@ def hazte_socio():
         # Convertir a mayúsculas y quitar acentos
         nombre = quitar_acentos(nombre)
         primer_apellido = quitar_acentos(primer_apellido)
-        if segundo_apellido:
-            segundo_apellido = quitar_acentos(segundo_apellido)
+        segundo_apellido = quitar_acentos(segundo_apellido)
         
         # Validar móvil (solo números)
         if not re.match(r'^\d{9}$', movil):
@@ -323,7 +322,7 @@ def hazte_socio():
         solicitud = SolicitudSocio(
             nombre=nombre,
             primer_apellido=primer_apellido,
-            segundo_apellido=segundo_apellido if segundo_apellido else None,
+            segundo_apellido=segundo_apellido,
             movil=movil,
             fecha_nacimiento=fecha_nacimiento_obj,
             miembros_unidad_familiar=miembros,
@@ -376,6 +375,8 @@ def hazte_socio():
                     campos_faltantes.append('nombre')
                 if not beneficiario_primer_apellido:
                     campos_faltantes.append('primer apellido')
+                if not beneficiario_segundo_apellido:
+                    campos_faltantes.append('segundo apellido')
                 if not beneficiario_ano:
                     campos_faltantes.append('año de nacimiento')
                 
@@ -406,8 +407,7 @@ def hazte_socio():
                 # Convertir a mayúsculas y quitar acentos
                 beneficiario_nombre = quitar_acentos(beneficiario_nombre)
                 beneficiario_primer_apellido = quitar_acentos(beneficiario_primer_apellido)
-                if beneficiario_segundo_apellido:
-                    beneficiario_segundo_apellido = quitar_acentos(beneficiario_segundo_apellido)
+                beneficiario_segundo_apellido = quitar_acentos(beneficiario_segundo_apellido)
                 
                 # Crear beneficiario de la solicitud
                 try:
@@ -415,7 +415,7 @@ def hazte_socio():
                         solicitud_id=solicitud.id,
                         nombre=beneficiario_nombre,
                         primer_apellido=beneficiario_primer_apellido,
-                        segundo_apellido=beneficiario_segundo_apellido if beneficiario_segundo_apellido else None,
+                        segundo_apellido=beneficiario_segundo_apellido,
                         ano_nacimiento=ano_nacimiento
                     )
                     db.session.add(beneficiario)
@@ -470,7 +470,7 @@ def confirmacion_solicitud(token):
     
     # Obtener iniciales de los apellidos
     inicial_primer_apellido = solicitud.primer_apellido[0].lower() if solicitud.primer_apellido else ''
-    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else 'x'  # Si no hay segundo apellido, usar 'x'
+    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else ''
     
     # Obtener año de nacimiento
     ano_nacimiento = solicitud.fecha_nacimiento.year if solicitud.fecha_nacimiento else ''
