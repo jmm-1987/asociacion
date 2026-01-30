@@ -159,6 +159,38 @@ def create_app():
             
             db.create_all()
             
+            # Verificar y añadir columnas faltantes (migraciones automáticas)
+            try:
+                database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+                if 'sqlite' in database_url.lower():
+                    from sqlalchemy import text, inspect
+                    inspector = inspect(db.engine)
+                    
+                    # Verificar si existe la tabla solicitudes_socio
+                    if 'solicitudes_socio' in inspector.get_table_names():
+                        # Obtener columnas existentes
+                        columnas_existentes = [col['name'] for col in inspector.get_columns('solicitudes_socio')]
+                        
+                        # Añadir movil2 si no existe
+                        if 'movil2' not in columnas_existentes:
+                            try:
+                                with db.engine.connect() as conn:
+                                    conn.execute(text('ALTER TABLE solicitudes_socio ADD COLUMN movil2 VARCHAR(20)'))
+                                    conn.commit()
+                                print("[INFO] Columna 'movil2' añadida automáticamente a 'solicitudes_socio'")
+                            except Exception as e:
+                                error_msg = str(e).lower()
+                                if "duplicate column name" in error_msg or "already exists" in error_msg:
+                                    print("[INFO] La columna 'movil2' ya existe en 'solicitudes_socio'")
+                                else:
+                                    print(f"[WARNING] No se pudo añadir la columna 'movil2': {e}")
+                                    import traceback
+                                    traceback.print_exc()
+                    else:
+                        print("[INFO] La tabla 'solicitudes_socio' no existe aún, se creará con db.create_all()")
+            except Exception as e:
+                print(f"[WARNING] Error al verificar columnas: {e}")
+            
             # Crear usuarios administradores automáticamente si no existen
             from models import User
             from datetime import datetime, timedelta, timezone
