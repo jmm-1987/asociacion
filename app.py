@@ -46,13 +46,14 @@ def create_app():
     # Configuración específica según el tipo de base de datos
     if database_url and 'sqlite' in database_url.lower():
         # Configuración optimizada para SQLite en producción
+        # IMPORTANTE: No usar isolation_level=None para mantener consistencia transaccional
         app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
             'connect_args': {
                 'timeout': 30,  # Timeout de 30 segundos para operaciones
-                'check_same_thread': False,  # Permitir múltiples hilos
-                'isolation_level': None,  # Usar autocommit para mejor control
+                'check_same_thread': False,  # Permitir múltiples hilos (necesario para Flask)
             },
             'pool_pre_ping': True,
+            'poolclass': None,  # SQLite no necesita pool de conexiones
         }
     elif database_url:
         # Configuración para PostgreSQL
@@ -66,29 +67,41 @@ def create_app():
             'connect_args': {
                 'timeout': 30,
                 'check_same_thread': False,
-                'isolation_level': None,
             },
             'pool_pre_ping': True,
+            'poolclass': None,
         }
     
     # Inicializar extensiones con la app
     db.init_app(app)
     
     # Configurar SQLite con WAL mode para mejor consistencia y rendimiento
+    # Los PRAGMAs se ejecutarán automáticamente en cada nueva conexión
     with app.app_context():
         try:
             database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
             if 'sqlite' in database_url.lower():
-                # Habilitar WAL mode para mejor consistencia y rendimiento
-                from sqlalchemy import text
-                with db.engine.connect() as conn:
-                    conn.execute(text('PRAGMA journal_mode=WAL;'))
-                    conn.execute(text('PRAGMA synchronous=NORMAL;'))
-                    conn.execute(text('PRAGMA foreign_keys=ON;'))
-                    conn.execute(text('PRAGMA busy_timeout=30000;'))  # 30 segundos timeout
-                    conn.execute(text('PRAGMA cache_size=-64000;'))  # 64MB cache
-                    conn.commit()
+                from sqlalchemy import event
+                
+                # Registrar evento para configurar PRAGMAs en cada nueva conexión
+                @event.listens_for(db.engine, "connect")
+                def set_sqlite_pragmas(dbapi_conn, connection_record):
+                    """Configura PRAGMAs de SQLite en cada nueva conexión para garantizar consistencia"""
+                    try:
+                        cursor = dbapi_conn.cursor()
+                        # Configurar PRAGMAs para mejor consistencia y rendimiento
+                        cursor.execute('PRAGMA journal_mode=WAL;')  # Write-Ahead Logging para mejor consistencia
+                        cursor.execute('PRAGMA synchronous=NORMAL;')  # Balance entre seguridad y rendimiento
+                        cursor.execute('PRAGMA foreign_keys=ON;')  # Habilitar claves foráneas
+                        cursor.execute('PRAGMA busy_timeout=30000;')  # 30 segundos timeout para evitar bloqueos
+                        cursor.execute('PRAGMA cache_size=-64000;')  # 64MB cache para mejor rendimiento
+                        cursor.execute('PRAGMA temp_store=FILE;')  # Usar archivo temporal en disco persistente
+                        cursor.close()
+                    except Exception as e:
+                        print(f"[WARNING] No se pudieron configurar PRAGMAs de SQLite: {e}")
+                
                 print("[INFO] SQLite configurado con WAL mode y optimizaciones para producción")
+                print(f"[INFO] Ruta de base de datos: {database_url.replace('sqlite:///', '')}")
         except Exception as e:
             print(f"[WARNING] No se pudo configurar SQLite: {e}")
     login_manager.init_app(app)
@@ -138,36 +151,11 @@ def create_app():
                         os.makedirs(db_dir, exist_ok=True)
                         print(f"[INFO] Directorio de base de datos creado: {db_dir}")
                     
-                    # Si estamos en Render con disco persistente y la BD no existe,
-                    # intentar copiar desde el repositorio
-                    is_render = os.environ.get('RENDER') == 'true'
-                    if is_render and not os.path.exists(db_path):
-                        import shutil
-                        # Obtener el directorio base del proyecto
-                        base_dir = os.path.dirname(os.path.abspath(__file__))
-                        
-                        # Buscar la base de datos en posibles ubicaciones del repositorio
-                        posibles_rutas = [
-                            os.path.join(base_dir, 'instance', 'asociacion.db'),
-                            os.path.join(base_dir, 'asociacion.db'),
-                            'instance/asociacion.db',
-                            'asociacion.db',
-                        ]
-                        
-                        # Añadir instance_path si existe
-                        if hasattr(app, 'instance_path'):
-                            posibles_rutas.insert(0, os.path.join(app.instance_path, 'asociacion.db'))
-                        
-                        for ruta_origen in posibles_rutas:
-                            if ruta_origen and os.path.exists(ruta_origen):
-                                try:
-                                    shutil.copy2(ruta_origen, db_path)
-                                    print(f"[INFO] Base de datos copiada desde {ruta_origen} a {db_path}")
-                                    break
-                                except Exception as e:
-                                    print(f"[WARNING] No se pudo copiar la BD desde {ruta_origen}: {e}")
-                            else:
-                                print(f"[DEBUG] Buscando BD en: {ruta_origen} - No encontrada")
+                    # IMPORTANTE: En producción con disco persistente, NUNCA copiar BD desde el repositorio
+                    # La BD debe crearse solo con db.create_all() para evitar sobrescribir datos de producción
+                    # El disco persistente (/mnt/disk) persiste entre deployments, así que la BD ya existe
+                    if not os.path.exists(db_path):
+                        print(f"[INFO] Base de datos no encontrada en {db_path}. Se creará automáticamente con db.create_all()")
             
             db.create_all()
             

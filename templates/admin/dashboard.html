@@ -8,9 +8,21 @@
         <i class="bi bi-speedometer2 me-2"></i>
         Panel de Directiva
     </h1>
-    <div class="text-muted">
-        <i class="bi bi-person-badge me-1"></i>
-        Bienvenido/a, {{ current_user.nombre }}
+    <div class="d-flex align-items-center gap-2">
+        <div class="text-muted">
+            <i class="bi bi-person-badge me-1"></i>
+            Bienvenido/a, {{ current_user.nombre }}
+        </div>
+        {% if current_user.nombre_usuario == 'jmurillo' %}
+        <a href="{{ url_for('admin.descargar_base_datos') }}" class="btn btn-sm btn-outline-primary" title="Descargar base de datos completa">
+            <i class="bi bi-download me-1"></i>
+            Descargar BD
+        </a>
+        <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalImportarBD" title="Importar base de datos">
+            <i class="bi bi-upload me-1"></i>
+            Importar BD
+        </button>
+        {% endif %}
     </div>
 </div>
 
@@ -221,5 +233,50 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Importar Base de Datos (solo para jmurillo) -->
+{% if current_user.nombre_usuario == 'jmurillo' %}
+<div class="modal fade" id="modalImportarBD" tabindex="-1" aria-labelledby="modalImportarBDLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="modalImportarBDLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Importar Base de Datos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>¡ADVERTENCIA!</strong> Esta operación reemplazará completamente la base de datos actual.
+                    Se creará un backup automático antes de la importación.
+                </div>
+                <form method="POST" action="{{ url_for('admin.importar_base_datos') }}" enctype="multipart/form-data" id="formImportarBD">
+                    <div class="mb-3">
+                        <label for="archivo_bd" class="form-label fw-bold">
+                            <i class="bi bi-file-earmark-arrow-up me-1"></i>
+                            Seleccionar archivo SQLite (.db)
+                        </label>
+                        <input type="file" class="form-control" id="archivo_bd" name="archivo" 
+                               accept=".db,.sqlite,.sqlite3" required>
+                        <small class="text-muted">Solo archivos SQLite válidos</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cancelar
+                </button>
+                <button type="submit" form="formImportarBD" class="btn btn-warning">
+                    <i class="bi bi-upload me-1"></i>
+                    Importar Base de Datos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 

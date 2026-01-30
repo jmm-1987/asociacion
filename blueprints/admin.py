@@ -344,6 +344,11 @@ def editar_socio(socio_id):
         nombre_usuario = request.form.get('nombre_usuario', '').strip()
         ano_nacimiento = request.form.get('ano_nacimiento', '').strip()
         password = request.form.get('password', '').strip()
+        numero_socio = request.form.get('numero_socio', '').strip()
+        rol = request.form.get('rol', '').strip()
+        fecha_alta_str = request.form.get('fecha_alta', '').strip()
+        fecha_validez_str = request.form.get('fecha_validez', '').strip()
+        fecha_nacimiento_str = request.form.get('fecha_nacimiento', '').strip()
         
         # Dirección
         calle = request.form.get('calle', '').strip()
@@ -352,7 +357,7 @@ def editar_socio(socio_id):
         poblacion = request.form.get('poblacion', '').strip()
         
         # Validaciones básicas
-        if not all([nombre, primer_apellido, nombre_usuario, calle, numero, poblacion]):
+        if not all([nombre, primer_apellido, segundo_apellido, nombre_usuario, calle, numero, poblacion, rol, fecha_validez_str]):
             flash('Todos los campos obligatorios deben estar completos.', 'error')
             from datetime import datetime as dt
             # Separar nombre completo en partes
@@ -392,7 +397,6 @@ def editar_socio(socio_id):
                         'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
                     }
                     return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
-                fecha_nacimiento_obj = datetime(ano_nac, 1, 1).date()
             except ValueError:
                 flash('Año de nacimiento inválido.', 'error')
                 from datetime import datetime as dt
@@ -404,8 +408,89 @@ def editar_socio(socio_id):
                 }
                 return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
         else:
-            fecha_nacimiento_obj = None
             ano_nac = None
+        
+        # Validar y procesar fecha de nacimiento completa
+        fecha_nacimiento_obj = None
+        if fecha_nacimiento_str:
+            try:
+                fecha_nacimiento_obj = datetime.strptime(fecha_nacimiento_str, '%Y-%m-%d').date()
+                # Si hay fecha de nacimiento completa, actualizar también el año
+                if not ano_nac:
+                    ano_nac = fecha_nacimiento_obj.year
+            except ValueError:
+                flash('Fecha de nacimiento inválida.', 'error')
+                from datetime import datetime as dt
+                partes_nombre = socio.nombre.split(' ', 2)
+                nombre_parts = {
+                    'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                    'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                    'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+                }
+                return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+        elif ano_nac:
+            # Si solo hay año, crear fecha con 1 de enero
+            fecha_nacimiento_obj = datetime(ano_nac, 1, 1).date()
+        
+        # Validar y procesar fecha de alta
+        fecha_alta_obj = None
+        if fecha_alta_str:
+            try:
+                fecha_alta_obj = datetime.strptime(fecha_alta_str, '%Y-%m-%d')
+            except ValueError:
+                flash('Fecha de alta inválida.', 'error')
+                from datetime import datetime as dt
+                partes_nombre = socio.nombre.split(' ', 2)
+                nombre_parts = {
+                    'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                    'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                    'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+                }
+                return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+        
+        # Validar y procesar fecha de validez
+        try:
+            fecha_validez_obj = datetime.strptime(fecha_validez_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            flash('Fecha de validez inválida.', 'error')
+            from datetime import datetime as dt
+            partes_nombre = socio.nombre.split(' ', 2)
+            nombre_parts = {
+                'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+            }
+            return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+        
+        # Validar número de socio (debe ser único si se proporciona)
+        if numero_socio:
+            numero_socio = numero_socio.strip()
+            # Verificar que sea único (excepto para el mismo socio)
+            socio_existente = User.query.filter_by(numero_socio=numero_socio).first()
+            if socio_existente and socio_existente.id != socio.id:
+                flash('Ya existe otro socio con este número de socio.', 'error')
+                from datetime import datetime as dt
+                partes_nombre = socio.nombre.split(' ', 2)
+                nombre_parts = {
+                    'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                    'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                    'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+                }
+                return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
+        else:
+            numero_socio = None
+        
+        # Validar rol
+        if rol not in ['socio', 'directiva']:
+            flash('Rol inválido.', 'error')
+            from datetime import datetime as dt
+            partes_nombre = socio.nombre.split(' ', 2)
+            nombre_parts = {
+                'nombre': partes_nombre[0] if len(partes_nombre) > 0 else '',
+                'primer_apellido': partes_nombre[1] if len(partes_nombre) > 1 else '',
+                'segundo_apellido': partes_nombre[2] if len(partes_nombre) > 2 else ''
+            }
+            return render_template('admin/editar_socio.html', socio=socio, beneficiarios=beneficiarios, nombre_parts=nombre_parts, datetime=dt)
         
         # Convertir a mayúsculas y quitar acentos
         nombre = quitar_acentos(nombre)
@@ -425,8 +510,13 @@ def editar_socio(socio_id):
         # Actualizar datos del socio
         socio.nombre = nombre_completo
         socio.nombre_usuario = nombre_usuario
+        socio.rol = rol
         socio.ano_nacimiento = ano_nac
         socio.fecha_nacimiento = fecha_nacimiento_obj
+        socio.numero_socio = numero_socio
+        if fecha_alta_obj:
+            socio.fecha_alta = fecha_alta_obj
+        socio.fecha_validez = fecha_validez_obj
         socio.calle = calle
         socio.numero = numero
         socio.piso = piso
@@ -1012,7 +1102,7 @@ def calcular_nombre_usuario_solicitud(solicitud):
     
     # Obtener iniciales de los apellidos
     inicial_primer_apellido = solicitud.primer_apellido[0].lower() if solicitud.primer_apellido else ''
-    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else 'x'
+    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else ''
     
     # Obtener año de nacimiento
     ano_nacimiento = solicitud.fecha_nacimiento.year if solicitud.fecha_nacimiento else ''
@@ -1055,6 +1145,7 @@ def solicitudes_socios():
     total_rechazadas = SolicitudSocio.query.filter_by(estado='rechazada').count()
     
     return render_template('admin/solicitudes_socios.html',
+                         solicitudes=solicitudes,
                          solicitudes_con_usuario=solicitudes_con_usuario,
                          estado_filtro=estado_filtro,
                          total_por_confirmar=total_por_confirmar,
@@ -1096,6 +1187,7 @@ def editar_solicitud(solicitud_id):
             nuevo_primer_apellido = request.form.get('primer_apellido', '').strip().upper()
             nuevo_segundo_apellido = request.form.get('segundo_apellido', '').strip().upper() or None
             nuevo_movil = request.form.get('movil', '').strip()
+            nuevo_movil2 = request.form.get('movil2', '').strip()  # Segundo móvil (opcional)
             nuevos_miembros = int(request.form.get('miembros_unidad_familiar', 1))
             nueva_forma_pago = request.form.get('forma_de_pago', '').strip()
             
@@ -1105,11 +1197,21 @@ def editar_solicitud(solicitud_id):
                 beneficiarios = BeneficiarioSolicitud.query.filter_by(solicitud_id=solicitud_id).order_by(BeneficiarioSolicitud.id).all()
                 return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
             
+            # Validar móvil2 si está presente
+            if nuevo_movil2 and not re.match(r'^\d{9}$', nuevo_movil2):
+                flash('El segundo número de móvil debe tener 9 dígitos o estar vacío.', 'error')
+                beneficiarios = BeneficiarioSolicitud.query.filter_by(solicitud_id=solicitud_id).order_by(BeneficiarioSolicitud.id).all()
+                return render_template('admin/editar_solicitud.html', solicitud=solicitud, beneficiarios=beneficiarios, datetime=dt)
+            
+            # Normalizar movil2 (None si está vacío)
+            nuevo_movil2 = nuevo_movil2 if nuevo_movil2 else None
+            
             # Actualizar datos del socio directamente en el objeto
             solicitud.nombre = nuevo_nombre
             solicitud.primer_apellido = nuevo_primer_apellido
             solicitud.segundo_apellido = nuevo_segundo_apellido
             solicitud.movil = nuevo_movil
+            solicitud.movil2 = nuevo_movil2
             solicitud.miembros_unidad_familiar = nuevos_miembros
             solicitud.forma_de_pago = nueva_forma_pago
             
@@ -1225,7 +1327,7 @@ def confirmar_solicitud(solicitud_id):
     
     # Obtener iniciales de los apellidos
     inicial_primer_apellido = solicitud.primer_apellido[0].lower() if solicitud.primer_apellido else ''
-    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else 'x'  # Si no hay segundo apellido, usar 'x'
+    inicial_segundo_apellido = solicitud.segundo_apellido[0].lower() if solicitud.segundo_apellido else ''
     
     # Obtener año de nacimiento
     ano_nacimiento = solicitud.fecha_nacimiento.year if solicitud.fecha_nacimiento else ''
@@ -1683,11 +1785,20 @@ def descargar_base_datos():
         if 'sqlite' in database_url.lower():
             db_path = database_url.replace('sqlite:///', '')
             if not os.path.isabs(db_path):
-                # Ruta relativa, buscar en instance/
-                db_path = os.path.join(current_app.instance_path, db_path)
+                # Ruta relativa, buscar en instance/ primero, luego en el directorio raíz
+                instance_path = os.path.join(current_app.instance_path, db_path)
+                root_path = db_path
+                
+                if os.path.exists(instance_path):
+                    db_path = instance_path
+                elif os.path.exists(root_path):
+                    db_path = root_path
+                else:
+                    # Si no existe en ninguna ubicación, intentar con instance/
+                    db_path = instance_path
             
             if not os.path.exists(db_path):
-                flash('No se encontró el archivo de base de datos SQLite.', 'error')
+                flash(f'No se encontró el archivo de base de datos SQLite en: {db_path}', 'error')
                 return redirect(url_for('admin.dashboard'))
             
             # Cerrar todas las conexiones y hacer checkpoint de WAL para asegurar consistencia
@@ -1805,6 +1916,115 @@ def descargar_base_datos():
             
     except Exception as e:
         flash(f'Error al descargar la base de datos: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/importar-base-datos', methods=['POST'])
+@login_required
+@directiva_required
+def importar_base_datos():
+    """Importa/restaura la base de datos desde un archivo SQLite subido"""
+    # Verificar que solo jmurillo puede usar esta función
+    if current_user.nombre_usuario != 'jmurillo':
+        flash('No tienes permisos para realizar esta operación.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    if 'archivo' not in request.files:
+        flash('No se ha seleccionado ningún archivo.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    archivo = request.files['archivo']
+    if archivo.filename == '':
+        flash('No se ha seleccionado ningún archivo.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    try:
+        database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///asociacion.db')
+        
+        # SQLite - importar desde archivo .db
+        if 'sqlite' in database_url.lower():
+            db_path = database_url.replace('sqlite:///', '')
+            if not os.path.isabs(db_path):
+                # Buscar en instance/ primero, luego en el directorio raíz
+                instance_path = os.path.join(current_app.instance_path, db_path)
+                root_path = db_path
+                
+                if os.path.exists(instance_path):
+                    db_path = instance_path
+                elif os.path.exists(root_path):
+                    db_path = root_path
+                else:
+                    # Si no existe, usar instance/ como ubicación por defecto
+                    db_path = instance_path
+            
+            # Cerrar todas las conexiones antes de importar
+            db.session.close_all()
+            db.engine.dispose()
+            
+            # Leer el archivo subido
+            archivo_data = archivo.read()
+            
+            # Validar que el archivo no esté vacío
+            if len(archivo_data) == 0:
+                flash('El archivo de base de datos está vacío.', 'error')
+                return redirect(url_for('admin.dashboard'))
+            
+            # Validar que sea un archivo SQLite válido (debe empezar con "SQLite format 3")
+            if not archivo_data.startswith(b'SQLite format 3\x00'):
+                flash('El archivo no parece ser un archivo SQLite válido.', 'error')
+                return redirect(url_for('admin.dashboard'))
+            
+            # Hacer backup del archivo actual antes de importar
+            if os.path.exists(db_path):
+                backup_actual = f"{db_path}.backup_antes_importacion_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                try:
+                    shutil.copy2(db_path, backup_actual)
+                    flash(f'Se creó un backup del archivo actual en: {backup_actual}', 'info')
+                except Exception as e:
+                    flash(f'Advertencia: No se pudo crear backup del archivo actual: {e}', 'warning')
+            
+            # Eliminar archivos auxiliares de WAL si existen (para evitar inconsistencias)
+            archivos_auxiliares = [
+                f"{db_path}-shm",
+                f"{db_path}-wal",
+                f"{db_path}.shm",
+                f"{db_path}.wal"
+            ]
+            for archivo_aux in archivos_auxiliares:
+                if os.path.exists(archivo_aux):
+                    try:
+                        os.remove(archivo_aux)
+                    except Exception as e:
+                        print(f"[WARNING] No se pudo eliminar archivo auxiliar {archivo_aux}: {e}")
+            
+            # Asegurar que el directorio existe
+            db_dir = os.path.dirname(db_path)
+            if db_dir and not os.path.exists(db_dir):
+                os.makedirs(db_dir, exist_ok=True)
+            
+            # Escribir el nuevo archivo completo
+            with open(db_path, 'wb') as f:
+                f.write(archivo_data)
+            
+            # Verificar que el archivo se escribió correctamente
+            if not os.path.exists(db_path) or os.path.getsize(db_path) != len(archivo_data):
+                flash('Error al escribir el archivo de base de datos. La importación puede estar incompleta.', 'error')
+                return redirect(url_for('admin.dashboard'))
+            
+            # Reiniciar conexiones de SQLAlchemy
+            db.session.close_all()
+            db.engine.dispose()
+            
+            flash('Base de datos SQLite importada exitosamente. Por favor, recarga la página para ver los cambios.', 'success')
+            return redirect(url_for('admin.dashboard'))
+        
+        else:
+            flash('Tipo de base de datos no soportado para importación completa.', 'error')
+            return redirect(url_for('admin.dashboard'))
+            
+    except Exception as e:
+        flash(f'Error al importar la base de datos: {str(e)}', 'error')
         import traceback
         traceback.print_exc()
         return redirect(url_for('admin.dashboard'))

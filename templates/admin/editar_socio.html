@@ -47,11 +47,11 @@
                                 
                                 <div class="col-md-4 mb-3">
                                     <label for="segundo_apellido" class="form-label fw-bold">
-                                        <i class="bi bi-person me-1"></i>Segundo Apellido
+                                        <i class="bi bi-person me-1"></i>Segundo Apellido <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" 
                                            value="{{ nombre_parts.segundo_apellido or '' }}" 
-                                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
+                                           required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" 
                                            title="Solo letras y espacios">
                                 </div>
                             </div>
@@ -83,7 +83,7 @@
                             </div>
                             
                             <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label for="ano_nacimiento" class="form-label fw-bold">
                                         <i class="bi bi-calendar me-1"></i>Año de Nacimiento
                                     </label>
@@ -92,15 +92,57 @@
                                            min="1900" max="{{ datetime.now().year }}" title="Año válido">
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">
-                                        <i class="bi bi-info-circle me-1"></i>Información del Socio
+                                <div class="col-md-4 mb-3">
+                                    <label for="numero_socio" class="form-label fw-bold">
+                                        <i class="bi bi-tag me-1"></i>Número de Socio
                                     </label>
-                                    <div class="form-control-plaintext">
-                                        <strong>Número de Socio:</strong> {{ socio.numero_socio or 'No asignado' }}<br>
-                                        <strong>Fecha de Alta:</strong> {{ socio.fecha_alta.strftime('%d/%m/%Y') if socio.fecha_alta else 'N/A' }}<br>
-                                        <strong>Validez hasta:</strong> {{ socio.fecha_validez.strftime('%d/%m/%Y') if socio.fecha_validez else 'N/A' }}
-                                    </div>
+                                    <input type="text" class="form-control" id="numero_socio" name="numero_socio" 
+                                           value="{{ socio.numero_socio or '' }}" 
+                                           pattern="[0-9]{4}" maxlength="4" 
+                                           title="4 dígitos (ej: 0001, 0002)">
+                                    <small class="text-muted">Formato: 0001, 0002, etc.</small>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="rol" class="form-label fw-bold">
+                                        <i class="bi bi-person-badge me-1"></i>Rol <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="rol" name="rol" required>
+                                        <option value="socio" {% if socio.rol == 'socio' %}selected{% endif %}>Socio</option>
+                                        <option value="directiva" {% if socio.rol == 'directiva' %}selected{% endif %}>Directiva</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fecha_alta" class="form-label fw-bold">
+                                        <i class="bi bi-calendar-plus me-1"></i>Fecha de Alta
+                                    </label>
+                                    <input type="date" class="form-control" id="fecha_alta" name="fecha_alta" 
+                                           value="{{ socio.fecha_alta.strftime('%Y-%m-%d') if socio.fecha_alta else '' }}">
+                                    <small class="text-muted">Fecha en que se registró el socio</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="fecha_validez" class="form-label fw-bold">
+                                        <i class="bi bi-calendar-check me-1"></i>Fecha de Validez <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="datetime-local" class="form-control" id="fecha_validez" name="fecha_validez" 
+                                           value="{% if socio.fecha_validez %}{{ socio.fecha_validez.strftime('%Y-%m-%dT%H:%M') }}{% endif %}" 
+                                           required>
+                                    <small class="text-muted">Fecha hasta la que es válida la suscripción</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fecha_nacimiento" class="form-label fw-bold">
+                                        <i class="bi bi-calendar-event me-1"></i>Fecha de Nacimiento Completa
+                                    </label>
+                                    <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" 
+                                           value="{{ socio.fecha_nacimiento.strftime('%Y-%m-%d') if socio.fecha_nacimiento else '' }}">
+                                    <small class="text-muted">Fecha completa de nacimiento (opcional, si no se especifica se usará el año de nacimiento)</small>
                                 </div>
                             </div>
                             

@@ -108,11 +108,18 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('admin.renovar_socio', socio_id=socio.id) }}" 
-                                       class="btn btn-outline-warning btn-sm" 
-                                       title="Renovar Suscripción">
-                                        <i class="bi bi-arrow-clockwise"></i>
-                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('admin.editar_socio', socio_id=socio.id) }}" 
+                                           class="btn btn-outline-primary btn-sm" 
+                                           title="Editar Socio">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.renovar_socio', socio_id=socio.id) }}" 
+                                           class="btn btn-outline-warning btn-sm" 
+                                           title="Renovar Suscripción">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             {% if socio.beneficiarios_lista %}

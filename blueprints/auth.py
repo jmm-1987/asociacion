@@ -92,7 +92,37 @@ def crear_backup_bd():
         backup_filename = f'backup_sqlite_{fecha_str}.db'
         try:
             if os.path.exists(db_path):
+                # IMPORTANTE: Hacer checkpoint de WAL antes de copiar para asegurar consistencia
+                from models import db
+                from sqlalchemy import text
+                try:
+                    # Cerrar todas las conexiones activas
+                    db.session.close_all()
+                    db.engine.dispose()
+                    
+                    # Hacer checkpoint completo de WAL para asegurar que todos los cambios están en el archivo principal
+                    with db.engine.connect() as conn:
+                        conn.execute(text('PRAGMA wal_checkpoint(FULL);'))
+                        conn.commit()
+                    
+                    # Cerrar de nuevo después del checkpoint
+                    db.session.close_all()
+                    db.engine.dispose()
+                except Exception as e:
+                    print(f"[WARNING] No se pudo hacer checkpoint de WAL antes del backup: {e}")
+                    # Continuar con el backup de todas formas
+                
+                # Copiar el archivo principal y los archivos WAL si existen
                 shutil.copy2(db_path, backup_filename)
+                
+                # También copiar archivos WAL y SHM si existen (para backup completo)
+                wal_file = f"{db_path}-wal"
+                shm_file = f"{db_path}-shm"
+                if os.path.exists(wal_file):
+                    shutil.copy2(wal_file, f"{backup_filename}-wal")
+                if os.path.exists(shm_file):
+                    shutil.copy2(shm_file, f"{backup_filename}-shm")
+                
                 print(f"[OK] Backup creado: {backup_filename}")
             else:
                 print(f"[ERROR] Archivo de BD no encontrado: {db_path}")
@@ -231,6 +261,7 @@ def hazte_socio():
         primer_apellido = request.form.get('primer_apellido', '').strip()
         segundo_apellido = request.form.get('segundo_apellido', '').strip()
         movil = request.form.get('movil', '').strip()
+        movil2 = request.form.get('movil2', '').strip()  # Segundo móvil (opcional)
         miembros_unidad_familiar = request.form.get('miembros_unidad_familiar', '').strip()
         forma_de_pago = request.form.get('forma_de_pago', '').strip()
         password = request.form.get('password', '').strip()
@@ -309,6 +340,16 @@ def hazte_socio():
             año_actual = datetime.now().year
             return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
         
+        # Validar móvil2 si está presente (opcional pero debe ser válido si se proporciona)
+        if movil2 and not re.match(r'^\d{9}$', movil2):
+            flash('El segundo número de móvil debe tener 9 dígitos o estar vacío.', 'error')
+            from datetime import datetime as dt
+            año_actual = datetime.now().year
+            return render_template('auth/hazte_socio.html', datetime=dt, current_year=año_actual)
+        
+        # Normalizar movil2 (vacío si no se proporciona)
+        movil2 = movil2 if movil2 else None
+        
         # Convertir dirección a mayúsculas
         calle = quitar_acentos(calle.upper())
         poblacion = quitar_acentos(poblacion.upper())
@@ -324,6 +365,7 @@ def hazte_socio():
             primer_apellido=primer_apellido,
             segundo_apellido=segundo_apellido,
             movil=movil,
+            movil2=movil2,  # Segundo móvil para grupo de WhatsApp (opcional)
             fecha_nacimiento=fecha_nacimiento_obj,
             miembros_unidad_familiar=miembros,
             forma_de_pago=forma_de_pago,

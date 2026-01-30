@@ -55,7 +55,7 @@
                             </div>
                             
                             <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label for="movil" class="form-label fw-bold">
                                         <i class="bi bi-phone me-1"></i>Móvil <span class="text-danger">*</span>
                                     </label>
@@ -65,7 +65,17 @@
                                     <small class="text-muted">9 dígitos sin espacios ni guiones</small>
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label for="movil2" class="form-label fw-bold">
+                                        <i class="bi bi-phone me-1"></i>Móvil 2
+                                    </label>
+                                    <input type="tel" class="form-control" id="movil2" name="movil2" 
+                                           pattern="[0-9]{9}" maxlength="9" 
+                                           title="9 dígitos numéricos" placeholder="123456789">
+                                    <small class="text-muted">Para añadir también a grupo de whatsapp de socios</small>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
                                     <label for="miembros_unidad_familiar" class="form-label fw-bold">
                                         <i class="bi bi-people me-1"></i>Miembros de la Unidad Familiar <span class="text-danger">*</span>
                                     </label>
@@ -270,6 +280,17 @@ document.addEventListener('DOMContentLoaded', function() {
             limpiarEspacios(e.target);
         });
         movil.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    }
+    
+    // Validar móvil2 (solo números) y limpiar espacios (opcional)
+    const movil2 = document.getElementById('movil2');
+    if (movil2) {
+        movil2.addEventListener('blur', function(e) {
+            limpiarEspacios(e.target);
+        });
+        movil2.addEventListener('input', function(e) {
             e.target.value = e.target.value.replace(/\D/g, '');
         });
     }

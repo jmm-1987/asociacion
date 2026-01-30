@@ -153,6 +153,7 @@ class SolicitudSocio(db.Model):
     primer_apellido = db.Column(db.String(100), nullable=False)
     segundo_apellido = db.Column(db.String(100), nullable=False)
     movil = db.Column(db.String(20), nullable=False)
+    movil2 = db.Column(db.String(20), nullable=True)  # Segundo móvil para grupo de WhatsApp (opcional)
     fecha_nacimiento = db.Column(db.Date, nullable=True)  # Fecha de nacimiento del socio
     miembros_unidad_familiar = db.Column(db.Integer, nullable=False)
     forma_de_pago = db.Column(db.String(20), nullable=False)  # 'bizum', 'transferencia', 'contado'

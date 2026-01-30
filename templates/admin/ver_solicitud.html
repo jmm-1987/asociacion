@@ -45,6 +45,17 @@
                         {{ solicitud.movil }}
                     </div>
                     <div class="col-md-6 mb-3">
+                        <strong>Móvil 2:</strong><br>
+                        {% if solicitud.movil2 %}
+                            {{ solicitud.movil2 }}
+                            <small class="text-muted d-block">(Para grupo de WhatsApp)</small>
+                        {% else %}
+                            <span class="text-muted">No especificado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
                         <strong>Miembros de la Unidad Familiar:</strong><br>
                         <span class="badge bg-info">{{ solicitud.miembros_unidad_familiar }}</span>
                     </div>
